@@ -103,7 +103,7 @@ extern void xslt_apply(struct xml_doc *xmldoc, struct xslt_doc *xsltdoc, const c
 	const char **params = NULL;
 	struct xslt_param *xparam;
 	struct bucket_loop *bloop;
-	xmlDocPtr res, doc;
+	xmlDocPtr res;
 	int cnt=0;
 
 	if (!objref(xmldoc)) {

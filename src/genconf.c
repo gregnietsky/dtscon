@@ -690,32 +690,26 @@ void squid() {
 	xslt_addparam(sgxslt, "filter", "Allow");
 	xslt_addparam(sgxslt, "type", "Domain");
 	xslt_apply(xmldoc, sgxslt, "local_allow_domains", 0);
-	xslt_clearparam(sgxslt);
 
 	xslt_addparam(sgxslt, "filter", "Deny");
 	xslt_addparam(sgxslt, "type", "Domain");
 	xslt_apply(xmldoc, sgxslt, "local_denyw_domains", 0);
-	xslt_clearparam(sgxslt);
 
 	xslt_addparam(sgxslt, "filter", "Allow");
 	xslt_addparam(sgxslt, "type", "URL");
 	xslt_apply(xmldoc, sgxslt, "local_allow_urls", 0);
-	xslt_clearparam(sgxslt);
 
 	xslt_addparam(sgxslt, "filter", "Deny");
 	xslt_addparam(sgxslt, "type", "URL");
 	xslt_apply(xmldoc, sgxslt, "local_deny_urls", 0);
-	xslt_clearparam(sgxslt);
 
 	xslt_addparam(sgxslt, "filter", "Allow");
 	xslt_addparam(sgxslt, "type", "Keyword");
 	xslt_apply(xmldoc, sgxslt, "local_allow_exp", 0);
-	xslt_clearparam(sgxslt);
 
 	xslt_addparam(sgxslt, "filter", "Deny");
 	xslt_addparam(sgxslt, "type", "Keyword");
 	xslt_apply(xmldoc, sgxslt, "local_deny_exp", 0);
-	xslt_clearparam(sgxslt);
 	objunref(sgxslt);
 
 	scxslt = get_xslt("squid.xsl");
@@ -797,7 +791,6 @@ void tftptmpl_config() {
 		xslt_addparam(spaxslt, "model", spaconf[cnt]);
 		snprintf(conffile, sizeof(conffile), "tftptmpl/%s.cfg", spaconf[cnt]);
 		xslt_apply(xmldoc, spaxslt, conffile, 0);
-		xslt_clearparam(spaxslt);
 	}
 	objunref(spaxslt);
 
@@ -805,7 +798,6 @@ void tftptmpl_config() {
 	for(cnt=0;cnt <= 9;cnt++) {
 		snprintf(conffile, sizeof(conffile), "tftptmpl/y00000000000%i.cfg", cnt);
 		xslt_apply(xmldoc, ylxslt, conffile, 0);
-		xslt_clearparam(ylxslt);
 	}
 	objunref(ylxslt);
 }
@@ -828,7 +820,6 @@ void domain_config(const char *domain, const char *key, int addrec) {
 
 	snprintf(conffile, cfsize, "zones/%s", domain);
 	xslt_apply(xmldoc, domxsl.zone, conffile, 0);
-	xslt_clearparam(domxsl.zone);
 
 	if (key) {
 		b64key = b64enc(key, 1);
@@ -836,14 +827,12 @@ void domain_config(const char *domain, const char *key, int addrec) {
 		xslt_addparam(domxsl.key, "key", b64key);
 		snprintf(conffile, cfsize, "zones/%s.key", domain);
 		xslt_apply(xmldoc, domxsl.key, conffile, 0);
-		xslt_clearparam(domxsl.key);
 		
 
 		xslt_addparam(domxsl.private, "domain", domain);
 		xslt_addparam(domxsl.private, "key", b64key);
 		snprintf(conffile, cfsize, "zones/%s.private", domain);
 		xslt_apply(xmldoc, domxsl.private, conffile, 0);
-		xslt_clearparam(domxsl.private);
 		objunref((void*)b64key);
 	}
 

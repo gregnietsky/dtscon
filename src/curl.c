@@ -25,7 +25,7 @@ extern void close_curleasy() {
 }
 
 extern char *url_escape(char *url) {
-	const char *esc;
+	char *esc;
 	objlock(curl_easy_handle);
 	esc = curl_easy_escape(curl_easy_handle->easy_handle, url, 0);
 	objunlock(curl_easy_handle);
@@ -33,7 +33,7 @@ extern char *url_escape(char *url) {
 }
 
 extern char *url_unescape(char *url) {
-	const char *uesc;
+	char *uesc;
 	objlock(curl_easy_handle);
 	uesc = curl_easy_unescape(curl_easy_handle->easy_handle, url, 0, 0);
 	objunlock(curl_easy_handle);
