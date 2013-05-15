@@ -638,10 +638,6 @@ LTLIBOBJS
 LIBOBJS
 CURL_LIBS
 CURL_CFLAGS
-XSLT_LIBS
-XSLT_CFLAGS
-XML_LIBS
-XML_CFLAGS
 NEWT_LIBS
 NEWT_CFLAGS
 SLANG_LIBS
@@ -651,7 +647,6 @@ FWORK_CFLAGS
 PKG_CONFIG_LIBDIR
 PKG_CONFIG_PATH
 PKG_CONFIG
-LDAP_LIBS
 DEVELOPER_CFLAGS
 CXXCPP
 am__fastdepCXX_FALSE
@@ -809,10 +804,6 @@ SLANG_CFLAGS
 SLANG_LIBS
 NEWT_CFLAGS
 NEWT_LIBS
-XML_CFLAGS
-XML_LIBS
-XSLT_CFLAGS
-XSLT_LIBS
 CURL_CFLAGS
 CURL_LIBS'
 
@@ -1481,10 +1472,6 @@ Some influential environment variables:
   SLANG_LIBS  linker flags for SLANG, overriding pkg-config
   NEWT_CFLAGS C compiler flags for NEWT, overriding pkg-config
   NEWT_LIBS   linker flags for NEWT, overriding pkg-config
-  XML_CFLAGS  C compiler flags for XML, overriding pkg-config
-  XML_LIBS    linker flags for XML, overriding pkg-config
-  XSLT_CFLAGS C compiler flags for XSLT, overriding pkg-config
-  XSLT_LIBS   linker flags for XSLT, overriding pkg-config
   CURL_CFLAGS C compiler flags for CURL, overriding pkg-config
   CURL_LIBS   linker flags for CURL, overriding pkg-config
 
@@ -16386,133 +16373,6 @@ else
   as_fn_error $? "Requires Math Lib -lm" "$LINENO" 5
 fi
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for ber_free in -llber" >&5
-$as_echo_n "checking for ber_free in -llber... " >&6; }
-if ${ac_cv_lib_lber_ber_free+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-llber  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char ber_free ();
-int
-main ()
-{
-return ber_free ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_lber_ber_free=yes
-else
-  ac_cv_lib_lber_ber_free=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_lber_ber_free" >&5
-$as_echo "$ac_cv_lib_lber_ber_free" >&6; }
-if test "x$ac_cv_lib_lber_ber_free" = xyes; then :
-  LDAP_LIBS="-llber"
-else
-  as_fn_error $? "Requires LDAP/BER/SASL Lib -llber -lldap -lsasl2" "$LINENO" 5
-fi
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for sasl_client_init in -lsasl2" >&5
-$as_echo_n "checking for sasl_client_init in -lsasl2... " >&6; }
-if ${ac_cv_lib_sasl2_sasl_client_init+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lsasl2  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char sasl_client_init ();
-int
-main ()
-{
-return sasl_client_init ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_sasl2_sasl_client_init=yes
-else
-  ac_cv_lib_sasl2_sasl_client_init=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_sasl2_sasl_client_init" >&5
-$as_echo "$ac_cv_lib_sasl2_sasl_client_init" >&6; }
-if test "x$ac_cv_lib_sasl2_sasl_client_init" = xyes; then :
-  LDAP_LIBS="${LDAP_LIBS} -lsasl2"
-else
-  as_fn_error $? "Requires LDAP/BER/SASL Lib -llber -lldap -lsasl2" "$LINENO" 5
-fi
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for ldap_initialize in -lldap" >&5
-$as_echo_n "checking for ldap_initialize in -lldap... " >&6; }
-if ${ac_cv_lib_ldap_ldap_initialize+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lldap  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char ldap_initialize ();
-int
-main ()
-{
-return ldap_initialize ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_ldap_ldap_initialize=yes
-else
-  ac_cv_lib_ldap_ldap_initialize=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_ldap_ldap_initialize" >&5
-$as_echo "$ac_cv_lib_ldap_ldap_initialize" >&6; }
-if test "x$ac_cv_lib_ldap_ldap_initialize" = xyes; then :
-  LDAP_LIBS="${LDAP_LIBS} -lldap"
-else
-  as_fn_error $? "Requires LDAP/BER/SASL Lib -llber -lldap -lsasl2" "$LINENO" 5
-fi
-
-
 
 
 
@@ -16902,188 +16762,6 @@ See \`config.log' for more details" "$LINENO" 5; }
 else
 	NEWT_CFLAGS=$pkg_cv_NEWT_CFLAGS
 	NEWT_LIBS=$pkg_cv_NEWT_LIBS
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-
-fi
-
-pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for XML" >&5
-$as_echo_n "checking for XML... " >&6; }
-
-if test -n "$XML_CFLAGS"; then
-    pkg_cv_XML_CFLAGS="$XML_CFLAGS"
- elif test -n "$PKG_CONFIG"; then
-    if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libxml-2.0 >= 2.9\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "libxml-2.0 >= 2.9") 2>&5
-  ac_status=$?
-  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
-  test $ac_status = 0; }; then
-  pkg_cv_XML_CFLAGS=`$PKG_CONFIG --cflags "libxml-2.0 >= 2.9" 2>/dev/null`
-		      test "x$?" != "x0" && pkg_failed=yes
-else
-  pkg_failed=yes
-fi
- else
-    pkg_failed=untried
-fi
-if test -n "$XML_LIBS"; then
-    pkg_cv_XML_LIBS="$XML_LIBS"
- elif test -n "$PKG_CONFIG"; then
-    if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libxml-2.0 >= 2.9\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "libxml-2.0 >= 2.9") 2>&5
-  ac_status=$?
-  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
-  test $ac_status = 0; }; then
-  pkg_cv_XML_LIBS=`$PKG_CONFIG --libs "libxml-2.0 >= 2.9" 2>/dev/null`
-		      test "x$?" != "x0" && pkg_failed=yes
-else
-  pkg_failed=yes
-fi
- else
-    pkg_failed=untried
-fi
-
-
-
-if test $pkg_failed = yes; then
-   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-
-if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
-        _pkg_short_errors_supported=yes
-else
-        _pkg_short_errors_supported=no
-fi
-        if test $_pkg_short_errors_supported = yes; then
-	        XML_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "libxml-2.0 >= 2.9" 2>&1`
-        else
-	        XML_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "libxml-2.0 >= 2.9" 2>&1`
-        fi
-	# Put the nasty error message in config.log where it belongs
-	echo "$XML_PKG_ERRORS" >&5
-
-	as_fn_error $? "Package requirements (libxml-2.0 >= 2.9) were not met:
-
-$XML_PKG_ERRORS
-
-Consider adjusting the PKG_CONFIG_PATH environment variable if you
-installed software in a non-standard prefix.
-
-Alternatively, you may set the environment variables XML_CFLAGS
-and XML_LIBS to avoid the need to call pkg-config.
-See the pkg-config man page for more details." "$LINENO" 5
-elif test $pkg_failed = untried; then
-     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-	{ { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "The pkg-config script could not be found or is too old.  Make sure it
-is in your PATH or set the PKG_CONFIG environment variable to the full
-path to pkg-config.
-
-Alternatively, you may set the environment variables XML_CFLAGS
-and XML_LIBS to avoid the need to call pkg-config.
-See the pkg-config man page for more details.
-
-To get pkg-config, see <http://pkg-config.freedesktop.org/>.
-See \`config.log' for more details" "$LINENO" 5; }
-else
-	XML_CFLAGS=$pkg_cv_XML_CFLAGS
-	XML_LIBS=$pkg_cv_XML_LIBS
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-
-fi
-
-pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for XSLT" >&5
-$as_echo_n "checking for XSLT... " >&6; }
-
-if test -n "$XSLT_CFLAGS"; then
-    pkg_cv_XSLT_CFLAGS="$XSLT_CFLAGS"
- elif test -n "$PKG_CONFIG"; then
-    if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libxslt >= 1.1\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "libxslt >= 1.1") 2>&5
-  ac_status=$?
-  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
-  test $ac_status = 0; }; then
-  pkg_cv_XSLT_CFLAGS=`$PKG_CONFIG --cflags "libxslt >= 1.1" 2>/dev/null`
-		      test "x$?" != "x0" && pkg_failed=yes
-else
-  pkg_failed=yes
-fi
- else
-    pkg_failed=untried
-fi
-if test -n "$XSLT_LIBS"; then
-    pkg_cv_XSLT_LIBS="$XSLT_LIBS"
- elif test -n "$PKG_CONFIG"; then
-    if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libxslt >= 1.1\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "libxslt >= 1.1") 2>&5
-  ac_status=$?
-  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
-  test $ac_status = 0; }; then
-  pkg_cv_XSLT_LIBS=`$PKG_CONFIG --libs "libxslt >= 1.1" 2>/dev/null`
-		      test "x$?" != "x0" && pkg_failed=yes
-else
-  pkg_failed=yes
-fi
- else
-    pkg_failed=untried
-fi
-
-
-
-if test $pkg_failed = yes; then
-   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-
-if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
-        _pkg_short_errors_supported=yes
-else
-        _pkg_short_errors_supported=no
-fi
-        if test $_pkg_short_errors_supported = yes; then
-	        XSLT_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "libxslt >= 1.1" 2>&1`
-        else
-	        XSLT_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "libxslt >= 1.1" 2>&1`
-        fi
-	# Put the nasty error message in config.log where it belongs
-	echo "$XSLT_PKG_ERRORS" >&5
-
-	as_fn_error $? "Package requirements (libxslt >= 1.1) were not met:
-
-$XSLT_PKG_ERRORS
-
-Consider adjusting the PKG_CONFIG_PATH environment variable if you
-installed software in a non-standard prefix.
-
-Alternatively, you may set the environment variables XSLT_CFLAGS
-and XSLT_LIBS to avoid the need to call pkg-config.
-See the pkg-config man page for more details." "$LINENO" 5
-elif test $pkg_failed = untried; then
-     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-	{ { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "The pkg-config script could not be found or is too old.  Make sure it
-is in your PATH or set the PKG_CONFIG environment variable to the full
-path to pkg-config.
-
-Alternatively, you may set the environment variables XSLT_CFLAGS
-and XSLT_LIBS to avoid the need to call pkg-config.
-See the pkg-config man page for more details.
-
-To get pkg-config, see <http://pkg-config.freedesktop.org/>.
-See \`config.log' for more details" "$LINENO" 5; }
-else
-	XSLT_CFLAGS=$pkg_cv_XSLT_CFLAGS
-	XSLT_LIBS=$pkg_cv_XSLT_LIBS
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
 

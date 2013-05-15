@@ -31,15 +31,9 @@ AC_ARG_ENABLE([world-peace], AS_HELP_STRING([--enable-world-peace], [Yeah right 
 
 # Checks for libraries.
 AC_CHECK_LIB([m], [pow], [], [AC_MSG_ERROR([Requires Math Lib -lm])])
-AC_CHECK_LIB([lber], [ber_free], [LDAP_LIBS="-llber"], [AC_MSG_ERROR([Requires LDAP/BER/SASL Lib -llber -lldap -lsasl2])])
-AC_CHECK_LIB([sasl2], [sasl_client_init], [LDAP_LIBS="${LDAP_LIBS} -lsasl2"], [AC_MSG_ERROR([Requires LDAP/BER/SASL Lib -llber -lldap -lsasl2])])
-AC_CHECK_LIB([ldap], [ldap_initialize], [LDAP_LIBS="${LDAP_LIBS} -lldap"], [AC_MSG_ERROR([Requires LDAP/BER/SASL Lib -llber -lldap -lsasl2])])
-AC_SUBST(LDAP_LIBS)
 PKG_CHECK_MODULES(FWORK, framework >= 0)
 PKG_CHECK_MODULES(SLANG, slang >= 2.2)
 PKG_CHECK_MODULES(NEWT, libnewt >= 0.52)
-PKG_CHECK_MODULES(XML, libxml-2.0 >= 2.9)
-PKG_CHECK_MODULES(XSLT, libxslt >= 1.1)
 PKG_CHECK_MODULES(CURL, libcurl >= 7)
 
 # Checks for header files.
