@@ -325,7 +325,8 @@ void ldaptest(const char *filter) {
 int main(int argc, char *argv[]) {
 	char *xsl = "/var/spool/apache/htdocs/ns/config/xsl";
 	char *confdir = "/var/spool/apache/htdocs/ns/config";
-	char *config = "netsentry.xml";
+	char *defconf = "netsentry.xml";
+	char *config = NULL;
 	int acnt;
 
 	startthreads();
@@ -340,6 +341,11 @@ int main(int argc, char *argv[]) {
 		} else if (!strcmp(argv[acnt], "-xsl")) {
 			xsl = argv[++acnt];
 		}
+	}
+
+	if (!config) {
+		config = objalloc(strlen(confdir)+strlen(defconf)+2, NULL);
+		sprintf(config, "%s/%s", confdir, defconf);
 	}
 
 	if (!(xmldata = xml_loaddoc(config, 1))) {
@@ -370,6 +376,7 @@ int main(int argc, char *argv[]) {
 	}
 	xslt_close();
 	xml_close();
+	objunref(config);
 	stopthreads();
 	return(0);
 }
