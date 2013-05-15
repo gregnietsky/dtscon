@@ -1052,12 +1052,12 @@ extern void ldap_unref_attr(struct ldap_entry *entry, struct ldap_attr *attr) {
 	}
 
 	if (objcnt(attr) > 1) {
+		objunref(attr);
+	} else {
 		if (attr == entry->first_attr) {
 			entry->first_attr = attr->next;
 		}
 		remove_bucket_item(entry->attrs, attr);
-	} else {
-		objunref(attr);
 	}
 }
 
