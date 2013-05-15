@@ -9,7 +9,6 @@ typedef struct xml_doc xml_doc;
 typedef struct xslt_doc xslt_doc;
 
 typedef int	(*menu_callback)(struct menu_item*);
-typedef void    (*param_callback)(struct xslt_doc*);
 typedef void    (*exit_callback)(void*);
 
 /*Newt*/
@@ -51,7 +50,6 @@ extern char *xml_getbuffer(void *buffer);
 extern void *xml_doctobuffer(struct xml_doc *xmldoc);
 extern const char *xml_getrootname(struct xml_doc *xmldoc);
 extern struct xml_node *xml_getrootnode(struct xml_doc *xmldoc);
-extern void *xml_getDocPtr(struct xml_doc *xmldoc);
 extern void xml_savefile(struct xml_doc *xmldoc, const char *file, int format, int compress);
 extern void xml_createpath(struct xml_doc *xmldoc, const char *xpath);
 extern void xml_init();
@@ -89,9 +87,8 @@ extern void addMenuList(struct menu_list *menulist, const char *name, menu_callb
 extern void xpath_to_menu(struct menu_list *menulist, struct xml_doc *xmldata, const char *xpath, const char *attrkey, menu_callback cb);
 
 /*XSLT*/
-extern struct xslt_doc *xslt_create(struct xml_doc *xmldoc, const char *xsltfile, param_callback paramcb);
+extern struct xslt_doc *xslt_open(const char *xsltfile);
 extern void xslt_addparam(struct xslt_doc *xsltdoc, const char *param, const char *value);
-extern void xslt_clearparam(struct xslt_doc *xsltdoc);
 extern void xslt_apply(struct xml_doc *xmldoc, struct xslt_doc *xsltdoc, const char *filename, int comp);
 extern void xslt_init();
 extern void xslt_close();

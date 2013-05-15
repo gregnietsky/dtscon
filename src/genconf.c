@@ -195,7 +195,7 @@ struct xslt_doc *get_xslt(const char *xslfile) {
 	
 	file = malloc(size);
 	snprintf(file, size, "%s/%s", xsldir, xslfile);
-	xslt = xslt_create(xmldoc, file, NULL);
+	xslt = xslt_open(file);
 	free(file);
 	return xslt;
 }

@@ -406,9 +406,12 @@ extern int ldap_simplebind(struct ldap_conn *ld, const char *dn, const char *pas
 	simple->cred = cred;
 	simple->dn = strdup(dn);
 
-	res = ldap_sasl_bind_s(ld->ldap, simple->dn, LDAP_SASL_SIMPLE, simple->cred, ld->sctrlsp, NULL, NULL);
 	objlock(ld);
+	if (ld->simple) {
+		objunref(ld->simple);
+	}
 	ld->simple = simple;
+	res = ldap_sasl_bind_s(ld->ldap, simple->dn, LDAP_SASL_SIMPLE, simple->cred, ld->sctrlsp, NULL, NULL);
 	objunlock(ld);
 	objunref(ld);
 	return res;
@@ -491,9 +494,12 @@ extern int ldap_saslbind(struct ldap_conn *ld, const char *mech, const char *rea
 		ldap_get_option(ld->ldap, LDAP_OPT_X_SASL_AUTHZID, &sasl->authzid );
 	}
 
-	res = ldap_sasl_interactive_bind_s(ld->ldap, NULL, sasl->mech, ld->sctrlsp , NULL, sasl_flags, dts_sasl_interact, sasl);
 	objlock(ld);
+	if (ld->sasl) {
+		objunref(ld->sasl);
+	}
 	ld->sasl = sasl;
+	res = ldap_sasl_interactive_bind_s(ld->ldap, NULL, sasl->mech, ld->sctrlsp , NULL, sasl_flags, dts_sasl_interact, sasl);
 	objunlock(ld);
 	objunref(ld);
 	return res;
@@ -544,8 +550,10 @@ struct ldap_results *dts_ldapsearch(struct ldap_conn *ld, const char *base, int 
 	timeout.tv_sec = ld->timelim;
 	timeout.tv_usec = 0;
 
+	objlock(ld);
 	if (!results || !results->entries ||
 	    (res = ldap_search_ext_s(ld->ldap, base, scope, filter, attrs, 0, ld->sctrlsp, NULL, &timeout, ld->limit, &result))) {
+		objunlock(ld);
 		objunref(ld);
 		objunref(results);
 		ldap_msgfree(result);
@@ -557,6 +565,7 @@ struct ldap_results *dts_ldapsearch(struct ldap_conn *ld, const char *base, int 
 		}
 		return NULL;
 	}
+	objunlock(ld);
 
 	if (attrs) {
 		free(attrs);
@@ -684,14 +693,18 @@ extern struct ldap_results *ldap_search_base(struct ldap_conn *ld, const char *b
 int ldap_count(LDAP *ld, LDAPMessage *message, int *err) {
 	int x;
 
+	objlock(ld);
 	x = ldap_count_entries(ld, message);
+	objunlock(ld);
 
 	if (!err) {
 		return x;
 	}
 
 	if (x < 0) {
+		objlock(ld);
 		ldap_get_option(ld, LDAP_OPT_RESULT_CODE, err);
+		objunlock(ld);
 	} else {
 		*err = LDAP_SUCCESS;
 	}
@@ -701,14 +714,18 @@ int ldap_count(LDAP *ld, LDAPMessage *message, int *err) {
 char *ldap_getdn(LDAP *ld, LDAPMessage *message, int *err) {
 	char *dn;
 
+	objlock(ld);
 	dn = ldap_get_dn(ld, message);
-
+	objunlock(ld);
+	
 	if (!err) {
 		return dn;
 	}
 
 	if (!dn) {
+		objlock(ld);
 		ldap_get_option(ld, LDAP_OPT_RESULT_CODE, err);
+		objunlock(ld);
 	} else {
 		*err = LDAP_SUCCESS;
 	}
@@ -720,12 +737,14 @@ char *ldap_getattribute(LDAP *ld, LDAPMessage *message, BerElement **berptr, int
 	BerElement *ber = *berptr;
 	char *attr = NULL;
 
+	objlock(ld);
 	if (ber) {
 		attr = ldap_next_attribute(ld, message, ber);
 	} else {
 		attr = ldap_first_attribute(ld, message, berptr);
 	}
 	if (!err) {
+		objunlock(ld);
 		return attr;
 	}
 
@@ -735,6 +754,7 @@ char *ldap_getattribute(LDAP *ld, LDAPMessage *message, BerElement **berptr, int
 		*err = LDAP_SUCCESS;
 	}
 
+	objunlock(ld);
 	return attr;
 }
 
@@ -768,7 +788,9 @@ char *ldap_encattr(void *attrval, int b64enc, enum ldap_attrtype *type) {
 struct berval **ldap_attrvals(LDAP *ld, LDAPMessage *message, char *attr, int *cnt, int *err) {
 	struct berval **vals = NULL;
 
+	objlock(ld);
 	vals = ldap_get_values_len(ld, message, attr);
+	objunlock(ld);
 
 	if (cnt) {
 		*cnt = ldap_count_values_len(vals);
@@ -901,12 +923,14 @@ struct ldap_entry *ldap_getent(LDAP *ld, LDAPMessage **msgptr, LDAPMessage *resu
 	LDAPAVA *rdn;
 	int res, cnt, tlen=0, dccnt=0;
 
+	objlock(ld);
 	if (message) {
 		message = ldap_next_entry(ld, message);
 	} else {
 		message = ldap_first_entry(ld, result);
 	}
 	*msgptr = message;
+	objunlock(ld);
 
 	if (message && !(ent = objalloc(sizeof(*ent), free_entry))) {
 		if (!err) {
@@ -915,7 +939,9 @@ struct ldap_entry *ldap_getent(LDAP *ld, LDAPMessage **msgptr, LDAPMessage *resu
 		return NULL;
 	} else if (!message) {
 		if (err) {
+			objlock(ld);
 			ldap_get_option(ld, LDAP_OPT_RESULT_CODE, err);
+			objunlock(ld);
 		}
 		return NULL;
 	}
@@ -928,13 +954,16 @@ struct ldap_entry *ldap_getent(LDAP *ld, LDAPMessage **msgptr, LDAPMessage *resu
 		return NULL;
 	}
 
+	objlock(ld);
 	if ((res = ldap_str2dn(ent->dn, &dnarr, LDAP_DN_PEDANTIC))) {
+		objunlock(ld);
 		if (err) {
 			*err = res;
 		}
 		objunref(ent);
 		return NULL;		
 	}
+	objunlock(ld);
 
 	ent->rdncnt = 0;
 	for (cnt=0; dnarr[cnt]; cnt++) {
@@ -1289,7 +1318,9 @@ extern int ldap_domodify(struct ldap_conn *ld, struct ldap_modify *lmod) {
 	}
 	*tmp = NULL;
 
+	objlock(ld);
 	res = ldap_modify_ext_s(ld->ldap, lmod->dn, modarr, ld->sctrlsp, NULL);
+	objunlock(ld);
 	ldap_mods_free(modarr, 1);
 	objunref(ld);
 	return res;
@@ -1429,7 +1460,9 @@ extern int ldap_doadd(struct ldap_conn *ld, struct ldap_add *ladd) {
 	stop_bucket_loop(bloop);
 	*tmp = NULL;
 
+	objlock(ld);
 	res = ldap_modify_ext_s(ld->ldap, ladd->dn, modarr, ld->sctrlsp, NULL);
+	objunlock(ld);
 	ldap_mods_free(modarr, 1);
 
 	return res;

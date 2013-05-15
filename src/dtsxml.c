@@ -8,6 +8,7 @@
 #include <framework/framework.h>
 
 #include "dtscon.h"
+#include "private.h"
 
 extern int xmlLoadExtwDtdDefaultValue;
 
@@ -15,13 +16,6 @@ struct xml_node_iter {
 	struct xml_search *xsearch;
 	int curpos;
 	int cnt;
-};
-
-struct xml_doc {
-	xmlDocPtr doc;
-	xmlNodePtr root;
-	xmlXPathContextPtr xpathCtx;
-	xmlValidCtxtPtr ValidCtxt;
 };
 
 struct xml_buffer {
@@ -201,16 +195,24 @@ struct xml_node *xml_gethash(struct xml_search *xpsearch, int i, const char* att
 		return NULL;
 	}
 
+	objlock(xpsearch->xmldoc);
+	objlock(xpsearch);
 	if (!(nodeset = xpsearch->xpathObj->nodesetval)) {
+		objunlock(xpsearch);
+		objunlock(xpsearch->xmldoc);
 		objunref(xpsearch);
 		return NULL;
 	}
 
 	if (!(node = nodeset->nodeTab[i])) {
+		objunlock(xpsearch);
+		objunlock(xpsearch->xmldoc);
 		objunref(xpsearch);
 		return NULL;
 	}
 	xn = xml_nodetohash(xpsearch->xmldoc, node, attrkey);
+	objunlock(xpsearch);
+	objunlock(xpsearch->xmldoc);
 	objunref(xpsearch);
 
 	return xn;
@@ -223,7 +225,12 @@ static void free_iter(void *data) {
 }
 
 extern struct xml_node *xml_getrootnode(struct xml_doc *xmldoc) {
-	return xml_nodetohash(xmldoc, xmldoc->root, NULL);
+	struct xml_node *rn;
+
+	objlock(xmldoc);
+	rn = xml_nodetohash(xmldoc, xmldoc->root, NULL);
+	objunlock(xmldoc);
+	return rn;
 }
 
 extern struct xml_node *xml_getfirstnode(struct xml_search *xpsearch, void **iter) {
@@ -236,12 +243,15 @@ extern struct xml_node *xml_getfirstnode(struct xml_search *xpsearch, void **ite
 
 	if (iter) {
 		newiter = objalloc(sizeof(*newiter), free_iter);
+		objlock(xpsearch);
 		newiter->cnt = xml_nodecount(xpsearch);
+		objunlock(xpsearch);
 		newiter->curpos = 0;
 		newiter->xsearch = xpsearch;
 		objref(newiter->xsearch);
 		*iter = newiter;
 	}
+
 	xn = xml_gethash(xpsearch, 0, NULL);
 	objunref(xpsearch);
 	return xn;
@@ -254,12 +264,16 @@ extern struct xml_node *xml_getnextnode(void *iter) {
 	if (!objref(xi->xsearch)) {
 		return NULL;
 	}
+
+	objlock(xi);
 	xi->curpos ++;
 	if (xi->curpos >= xi->cnt) {
+		objunlock(xi);
 		objunref(xi->xsearch);
 		return NULL;
 	}
 	xn = xml_gethash(xi->xsearch, xi->curpos, NULL);
+	objunlock(xi);
 	objunref(xi->xsearch);
 
 	return xn;
@@ -277,17 +291,21 @@ struct bucket_list *xml_setnodes(struct xml_search *xpsearch, const char* attrke
 	struct bucket_list *nodes;
 	int cnt, i;
 
-	if (!objref(xpsearch) || !(nodes = create_bucketlist(2, node_hash))) {
+	if (!(nodes = create_bucketlist(2, node_hash))) {
 		return NULL;
 	}
 
 	cnt = xml_nodecount(xpsearch);
 	for(i=0; i < cnt;i++) {
 		ninfo = xml_gethash(xpsearch, i, attrkey);
-		addtobucket(nodes, ninfo);
+		if (!addtobucket(nodes, ninfo)) {
+			objunref(ninfo);
+			objunref(nodes);
+			nodes = NULL;
+			break;
+		}
 		objunref(ninfo);
 	}
-	objunref(xpsearch);
 	return nodes;
 }
 
@@ -298,18 +316,25 @@ extern struct xml_search *xml_xpath(struct xml_doc *xmldata, const char *xpath, 
 		return NULL;
 	}
 
+	objlock(xmldata);
 	xpsearch->xmldoc = xmldata;
 	if (!(xpsearch->xpathObj = xmlXPathEvalExpression((const xmlChar*)xpath, xmldata->xpathCtx))) {
+		objunlock(xmldata);
 		objunref(xpsearch);
 		return NULL;
 	}
 
 	if (xmlXPathNodeSetIsEmpty(xpsearch->xpathObj->nodesetval)) {
+		objunlock(xmldata);
 		objunref(xpsearch);
 		return NULL;
 	}
+	objunlock(xmldata);
 
-	xpsearch->nodes = xml_setnodes(xpsearch, attrkey);
+	if (!(xpsearch->nodes = xml_setnodes(xpsearch, attrkey))) {
+		objunref(xpsearch);
+		return NULL;
+	}
 	return xpsearch;
 }
 
@@ -355,16 +380,20 @@ extern const char *xml_getrootname(struct xml_doc *xmldoc) {
 extern void xml_modify(struct xml_doc *xmldoc, struct xml_node *xnode, const char *value) {
 	xmlChar *encval;
 
+	objlock(xmldoc);
 	encval = xmlEncodeSpecialChars(xmldoc->doc, (const xmlChar*)value);
 	xmlNodeSetContent(xnode->nodeptr, encval);
+	objunlock(xmldoc);
 	xmlFree(encval);
 }
 
 extern void xml_setattr(struct xml_doc *xmldoc, struct xml_node *xnode, const char *name, const char *value) {
 	xmlChar *encval;
 
+	objlock(xmldoc);
 	encval = xmlEncodeSpecialChars(xmldoc->doc, (const xmlChar*)value);
 	xmlSetProp(xnode->nodeptr, (const xmlChar*)name, (const xmlChar*)encval);
+	objunlock(xmldoc);
 	xmlFree(encval);
 }
 
@@ -410,13 +439,16 @@ extern void xml_createpath(struct xml_doc *xmldoc, const char *xpath) {
 			continue;
 		}
 
+		objlock(xmldoc);
 		if (!(xpathObj = xmlXPathEvalExpression((const xmlChar*)cpath, xmldoc->xpathCtx))) {
+			objunlock(xmldoc);
 			free(lpath);
 			free(cpath);
 			free(dup);
 			objunref(xmldoc);
 			return;
 		}
+		objunlock(xmldoc);
 
 		if (xmlXPathNodeSetIsEmpty(xpathObj->nodesetval)) {
 			nn = xml_addnode(xmldoc, lpath, tok, NULL, NULL, NULL);
@@ -444,17 +476,28 @@ extern struct xml_node *xml_addnode(struct xml_doc *xmldoc, const char *xpath, c
 	xmlChar *encval;
 	int i,cnt;
 
-	if (!xmldoc || !(xpathObj = xmlXPathEvalExpression((const xmlChar*)xpath, xmldoc->xpathCtx))) {
+	if (!objref(xmldoc)) {
+		return NULL;
+	}
+
+	objlock(xmldoc);
+	if (!(xpathObj = xmlXPathEvalExpression((const xmlChar*)xpath, xmldoc->xpathCtx))) {
+		objunlock(xmldoc);
+		objunref(xmldoc);
 		return NULL;
 	}
 
 	if (xmlXPathNodeSetIsEmpty(xpathObj->nodesetval)) {
+		objunlock(xmldoc);
 		xmlXPathFreeObject(xpathObj);
+		objunref(xmldoc);
 		return NULL;
 	}
 
 	if (!(nodes = xpathObj->nodesetval)) {
+		objunlock(xmldoc);
 		xmlXPathFreeObject(xpathObj);
+		objunref(xmldoc);
 		return NULL;
 	}
 
@@ -468,17 +511,21 @@ extern struct xml_node *xml_addnode(struct xml_doc *xmldoc, const char *xpath, c
 	}
 
 	if (!parent) {
+		objunlock(xmldoc);
 		xmlXPathFreeObject(xpathObj);
+		objunref(xmldoc);
 		return NULL;
 	}
 
 	encval = xmlEncodeSpecialChars(xmldoc->doc, (const xmlChar*)value);
 	child = xmlNewDocNode(xmldoc->doc, NULL, (const xmlChar*)name, encval);
 	xmlAddChild(parent,child);
+	objunlock(xmldoc);
 	xmlFree(encval);
 	xmlXPathFreeObject(xpathObj);
 
 	if (!(newnode = xml_nodetohash(xmldoc, child, attrkey))) {
+		objunref(xmldoc);
 		return NULL;
 	}
 
@@ -486,13 +533,17 @@ extern struct xml_node *xml_addnode(struct xml_doc *xmldoc, const char *xpath, c
 		xml_setattr(xmldoc, newnode, attrkey, keyval);
 	}
 
+	objunref(xmldoc);
+
 	return newnode;
 }
 
 extern void xml_delete(struct xml_node *xnode) {
+	objlock(xnode);
 	xmlUnlinkNode(xnode->nodeptr);
 	xmlFreeNode(xnode->nodeptr);
 	xnode->nodeptr = NULL;
+	objunlock(xnode);
 }
 
 extern char *xml_getbuffer(void *buffer) {
@@ -511,15 +562,10 @@ extern void *xml_doctobuffer(struct xml_doc *xmldoc) {
 		return NULL;
 	}
 
+	objlock(xmldoc);
 	xmlDocDumpFormatMemory(xmldoc->doc, &xmlbuf->buffer, &xmlbuf->size, 1);
+	objunlock(xmldoc);
 	return xmlbuf;
-}
-
-extern void *xml_getDocPtr(struct xml_doc *xmldoc) {
-	if (objref(xmldoc)) {
-		return xmldoc->doc;
-	}
-	return NULL;
 }
 
 extern void xml_init() {
@@ -542,9 +588,11 @@ extern void xml_close() {
 }
 
 extern void xml_savefile(struct xml_doc *xmldoc, const char *file, int format, int compress) {
+	objlock(xmldoc);
 	xmlSetDocCompressMode(xmldoc->doc, compress);
 	xmlSaveFormatFile(file, xmldoc->doc, format);
 	xmlSetDocCompressMode(xmldoc->doc, 0);
+	objunlock(xmldoc);
 }
 
 extern void xml_modify2(struct xml_search *xpsearch, struct xml_node *xnode, const char *value) {

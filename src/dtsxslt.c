@@ -6,6 +6,7 @@
 #include <framework.h>
 
 #include "dtscon.h"
+#include "private.h"
 
 struct xslt_doc {
 	xsltStylesheetPtr doc;
@@ -17,6 +18,8 @@ struct xslt_param {
 	const char *value;
 };
 
+static void *xslt_has_init_parser = NULL;
+
 void free_xsltdoc(void *data) {
 	struct xslt_doc *xsltdoc = data;
 
@@ -24,8 +27,6 @@ void free_xsltdoc(void *data) {
 	objunref(xsltdoc->params);
 	xslt_close();
 }
-
-static void *xslt_has_init_parser = NULL;
 
 void free_parser(void *data) {
 	xsltCleanupGlobals();
@@ -45,7 +46,7 @@ int xslt_hash(const void *data, int key) {
 	return(ret);
 }
 
-extern struct xslt_doc *xslt_create(struct xml_doc *xmldoc, const char *xsltfile, param_callback paramcb) {
+extern struct xslt_doc *xslt_open(const char *xsltfile) {
 	struct xslt_doc *xsltdoc;
 
 	if (!(xsltdoc = objalloc(sizeof(*xsltdoc), free_xsltdoc))) {
@@ -80,18 +81,22 @@ extern void xslt_addparam(struct xslt_doc *xsltdoc, const char *param, const cha
 	ALLOC_CONST(xparam->name, param);
 	xparam->value = malloc(size);
 	snprintf((char *)xparam->value, size, "'%s'", value);
+	objlock(xsltdoc);
 	addtobucket(xsltdoc->params, xparam);
+	objunlock(xsltdoc);
 	objunref(xparam);
 	objunref(xsltdoc);
 }
 
-extern void xslt_clearparam(struct xslt_doc *xsltdoc) {
+void xslt_clearparam(struct xslt_doc *xsltdoc) {
 	if (!xsltdoc || !xsltdoc->params) {
 		return;
 	}
 
+	objlock(xsltdoc);
 	objunref(xsltdoc->params);
 	xsltdoc->params = create_bucketlist(0, xslt_hash);
+	objunlock(xsltdoc);
 }
 
 extern void xslt_apply(struct xml_doc *xmldoc, struct xslt_doc *xsltdoc, const char *filename, int comp) {
@@ -101,15 +106,16 @@ extern void xslt_apply(struct xml_doc *xmldoc, struct xslt_doc *xsltdoc, const c
 	xmlDocPtr res, doc;
 	int cnt=0;
 
-	if (!(doc = xml_getDocPtr(xmldoc))) {
+	if (!objref(xmldoc)) {
 		return;
 	}
 
 	if (!objref(xsltdoc)) {
-		objunref(xsltdoc);
+		objunref(xmldoc);
 		return;
 	}
 
+	objlock(xsltdoc);
 	params = malloc(sizeof(void*) * (bucket_list_cnt(xsltdoc->params)*2 + 2));
 	bloop = init_bucket_loop(xsltdoc->params);
 	while(bloop && (xparam = next_bucket_loop(bloop))) {
@@ -120,15 +126,17 @@ extern void xslt_apply(struct xml_doc *xmldoc, struct xslt_doc *xsltdoc, const c
 		objunref(xparam);
 	};
 	params[cnt] = NULL;
-	res = xsltApplyStylesheet(xsltdoc->doc, doc, params);
-
 	touch(filename, 80, 80);
+	objlock(xmldoc);
+	res = xsltApplyStylesheet(xsltdoc->doc, xmldoc->doc, params);
 	xsltSaveResultToFilename(filename, res, xsltdoc->doc, comp);
+	objunlock(xmldoc);
+	objunref(xmldoc);
+	objunlock(xsltdoc);
 
 	free(params);
-	xslt_clearparam(xsltdoc);
 	xmlFreeDoc(res);
-	objunref(xmldoc);
+	xslt_clearparam(xsltdoc);
 	objunref(xsltdoc);
 }
 

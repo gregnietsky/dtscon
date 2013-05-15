@@ -25,11 +25,19 @@ extern void close_curleasy() {
 }
 
 extern char *url_escape(char *url) {
-	return curl_easy_escape(curl_easy_handle->easy_handle, url, 0);
+	const char *esc;
+	objlock(curl_easy_handle);
+	esc = curl_easy_escape(curl_easy_handle->easy_handle, url, 0);
+	objunlock(curl_easy_handle);
+	return esc; 
 }
 
 extern char *url_unescape(char *url) {
-	return curl_easy_unescape(curl_easy_handle->easy_handle, url, 0, 0);
+	const char *uesc;
+	objlock(curl_easy_handle);
+	uesc = curl_easy_unescape(curl_easy_handle->easy_handle, url, 0, 0);
+	objunlock(curl_easy_handle);
+	return uesc;
 }
 
 extern void free_curl(void *curlvar) {
