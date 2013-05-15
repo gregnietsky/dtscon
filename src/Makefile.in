@@ -68,11 +68,11 @@ CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am_dtscon_OBJECTS = dtscon-newt.$(OBJEXT) dtscon-dtscon.$(OBJEXT) \
-	dtscon-dtsxml.$(OBJEXT) dtscon-nform.$(OBJEXT) \
-	dtscon-nmenu.$(OBJEXT) dtscon-dtsxslt.$(OBJEXT) \
+	dtscon-libxml2.$(OBJEXT) dtscon-nform.$(OBJEXT) \
+	dtscon-nmenu.$(OBJEXT) dtscon-libxslt.$(OBJEXT) \
 	dtscon-genconf.$(OBJEXT) dtscon-ip4util.$(OBJEXT) \
 	dtscon-curl.$(OBJEXT) dtscon-util.$(OBJEXT) \
-	dtscon-dtsldap.$(OBJEXT)
+	dtscon-openldap.$(OBJEXT)
 dtscon_OBJECTS = $(am_dtscon_OBJECTS)
 am__DEPENDENCIES_1 =
 dtscon_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
@@ -285,7 +285,7 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 ACLOCAL_AMFLAGS = -I m4
 AM_CFLAGS = -I./include
-dtscon_SOURCES = newt.c dtscon.c dtsxml.c nform.c nmenu.c dtsxslt.c genconf.c ip4util.c curl.c util.c dtsldap.c
+dtscon_SOURCES = newt.c dtscon.c libxml2.c nform.c nmenu.c libxslt.c genconf.c ip4util.c curl.c util.c openldap.c
 dtscon_CFLAGS = $(FWORK_CFLAGS) $(SLANG_CFLAGS) $(NEWT_CFLAGS) $(XSLT_CFLAGS) $(XML_CFLAGS) $(DEVELOPER_CFLAGS) $(CURL_CFLAGS)
 dtscon_LDADD = $(FWORK_LIBS) $(SLANG_LIBS) $(NEWT_LIBS) $(XSLT_LIBS) $(XML_LIBS) $(CURL_LIBS) $(LDAP_LIBS) $(LIBS)
 all: all-am
@@ -383,14 +383,14 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dtscon-curl.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dtscon-dtscon.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dtscon-dtsldap.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dtscon-dtsxml.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dtscon-dtsxslt.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dtscon-genconf.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dtscon-ip4util.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dtscon-libxml2.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dtscon-libxslt.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dtscon-newt.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dtscon-nform.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dtscon-nmenu.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dtscon-openldap.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dtscon-util.Po@am__quote@
 
 .c.o:
@@ -442,19 +442,19 @@ dtscon-dtscon.obj: dtscon.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(dtscon_CFLAGS) $(CFLAGS) -c -o dtscon-dtscon.obj `if test -f 'dtscon.c'; then $(CYGPATH_W) 'dtscon.c'; else $(CYGPATH_W) '$(srcdir)/dtscon.c'; fi`
 
-dtscon-dtsxml.o: dtsxml.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(dtscon_CFLAGS) $(CFLAGS) -MT dtscon-dtsxml.o -MD -MP -MF $(DEPDIR)/dtscon-dtsxml.Tpo -c -o dtscon-dtsxml.o `test -f 'dtsxml.c' || echo '$(srcdir)/'`dtsxml.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/dtscon-dtsxml.Tpo $(DEPDIR)/dtscon-dtsxml.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='dtsxml.c' object='dtscon-dtsxml.o' libtool=no @AMDEPBACKSLASH@
+dtscon-libxml2.o: libxml2.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(dtscon_CFLAGS) $(CFLAGS) -MT dtscon-libxml2.o -MD -MP -MF $(DEPDIR)/dtscon-libxml2.Tpo -c -o dtscon-libxml2.o `test -f 'libxml2.c' || echo '$(srcdir)/'`libxml2.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/dtscon-libxml2.Tpo $(DEPDIR)/dtscon-libxml2.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='libxml2.c' object='dtscon-libxml2.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(dtscon_CFLAGS) $(CFLAGS) -c -o dtscon-dtsxml.o `test -f 'dtsxml.c' || echo '$(srcdir)/'`dtsxml.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(dtscon_CFLAGS) $(CFLAGS) -c -o dtscon-libxml2.o `test -f 'libxml2.c' || echo '$(srcdir)/'`libxml2.c
 
-dtscon-dtsxml.obj: dtsxml.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(dtscon_CFLAGS) $(CFLAGS) -MT dtscon-dtsxml.obj -MD -MP -MF $(DEPDIR)/dtscon-dtsxml.Tpo -c -o dtscon-dtsxml.obj `if test -f 'dtsxml.c'; then $(CYGPATH_W) 'dtsxml.c'; else $(CYGPATH_W) '$(srcdir)/dtsxml.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/dtscon-dtsxml.Tpo $(DEPDIR)/dtscon-dtsxml.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='dtsxml.c' object='dtscon-dtsxml.obj' libtool=no @AMDEPBACKSLASH@
+dtscon-libxml2.obj: libxml2.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(dtscon_CFLAGS) $(CFLAGS) -MT dtscon-libxml2.obj -MD -MP -MF $(DEPDIR)/dtscon-libxml2.Tpo -c -o dtscon-libxml2.obj `if test -f 'libxml2.c'; then $(CYGPATH_W) 'libxml2.c'; else $(CYGPATH_W) '$(srcdir)/libxml2.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/dtscon-libxml2.Tpo $(DEPDIR)/dtscon-libxml2.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='libxml2.c' object='dtscon-libxml2.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(dtscon_CFLAGS) $(CFLAGS) -c -o dtscon-dtsxml.obj `if test -f 'dtsxml.c'; then $(CYGPATH_W) 'dtsxml.c'; else $(CYGPATH_W) '$(srcdir)/dtsxml.c'; fi`
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(dtscon_CFLAGS) $(CFLAGS) -c -o dtscon-libxml2.obj `if test -f 'libxml2.c'; then $(CYGPATH_W) 'libxml2.c'; else $(CYGPATH_W) '$(srcdir)/libxml2.c'; fi`
 
 dtscon-nform.o: nform.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(dtscon_CFLAGS) $(CFLAGS) -MT dtscon-nform.o -MD -MP -MF $(DEPDIR)/dtscon-nform.Tpo -c -o dtscon-nform.o `test -f 'nform.c' || echo '$(srcdir)/'`nform.c
@@ -484,19 +484,19 @@ dtscon-nmenu.obj: nmenu.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(dtscon_CFLAGS) $(CFLAGS) -c -o dtscon-nmenu.obj `if test -f 'nmenu.c'; then $(CYGPATH_W) 'nmenu.c'; else $(CYGPATH_W) '$(srcdir)/nmenu.c'; fi`
 
-dtscon-dtsxslt.o: dtsxslt.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(dtscon_CFLAGS) $(CFLAGS) -MT dtscon-dtsxslt.o -MD -MP -MF $(DEPDIR)/dtscon-dtsxslt.Tpo -c -o dtscon-dtsxslt.o `test -f 'dtsxslt.c' || echo '$(srcdir)/'`dtsxslt.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/dtscon-dtsxslt.Tpo $(DEPDIR)/dtscon-dtsxslt.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='dtsxslt.c' object='dtscon-dtsxslt.o' libtool=no @AMDEPBACKSLASH@
+dtscon-libxslt.o: libxslt.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(dtscon_CFLAGS) $(CFLAGS) -MT dtscon-libxslt.o -MD -MP -MF $(DEPDIR)/dtscon-libxslt.Tpo -c -o dtscon-libxslt.o `test -f 'libxslt.c' || echo '$(srcdir)/'`libxslt.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/dtscon-libxslt.Tpo $(DEPDIR)/dtscon-libxslt.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='libxslt.c' object='dtscon-libxslt.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(dtscon_CFLAGS) $(CFLAGS) -c -o dtscon-dtsxslt.o `test -f 'dtsxslt.c' || echo '$(srcdir)/'`dtsxslt.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(dtscon_CFLAGS) $(CFLAGS) -c -o dtscon-libxslt.o `test -f 'libxslt.c' || echo '$(srcdir)/'`libxslt.c
 
-dtscon-dtsxslt.obj: dtsxslt.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(dtscon_CFLAGS) $(CFLAGS) -MT dtscon-dtsxslt.obj -MD -MP -MF $(DEPDIR)/dtscon-dtsxslt.Tpo -c -o dtscon-dtsxslt.obj `if test -f 'dtsxslt.c'; then $(CYGPATH_W) 'dtsxslt.c'; else $(CYGPATH_W) '$(srcdir)/dtsxslt.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/dtscon-dtsxslt.Tpo $(DEPDIR)/dtscon-dtsxslt.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='dtsxslt.c' object='dtscon-dtsxslt.obj' libtool=no @AMDEPBACKSLASH@
+dtscon-libxslt.obj: libxslt.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(dtscon_CFLAGS) $(CFLAGS) -MT dtscon-libxslt.obj -MD -MP -MF $(DEPDIR)/dtscon-libxslt.Tpo -c -o dtscon-libxslt.obj `if test -f 'libxslt.c'; then $(CYGPATH_W) 'libxslt.c'; else $(CYGPATH_W) '$(srcdir)/libxslt.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/dtscon-libxslt.Tpo $(DEPDIR)/dtscon-libxslt.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='libxslt.c' object='dtscon-libxslt.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(dtscon_CFLAGS) $(CFLAGS) -c -o dtscon-dtsxslt.obj `if test -f 'dtsxslt.c'; then $(CYGPATH_W) 'dtsxslt.c'; else $(CYGPATH_W) '$(srcdir)/dtsxslt.c'; fi`
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(dtscon_CFLAGS) $(CFLAGS) -c -o dtscon-libxslt.obj `if test -f 'libxslt.c'; then $(CYGPATH_W) 'libxslt.c'; else $(CYGPATH_W) '$(srcdir)/libxslt.c'; fi`
 
 dtscon-genconf.o: genconf.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(dtscon_CFLAGS) $(CFLAGS) -MT dtscon-genconf.o -MD -MP -MF $(DEPDIR)/dtscon-genconf.Tpo -c -o dtscon-genconf.o `test -f 'genconf.c' || echo '$(srcdir)/'`genconf.c
@@ -554,19 +554,19 @@ dtscon-util.obj: util.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(dtscon_CFLAGS) $(CFLAGS) -c -o dtscon-util.obj `if test -f 'util.c'; then $(CYGPATH_W) 'util.c'; else $(CYGPATH_W) '$(srcdir)/util.c'; fi`
 
-dtscon-dtsldap.o: dtsldap.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(dtscon_CFLAGS) $(CFLAGS) -MT dtscon-dtsldap.o -MD -MP -MF $(DEPDIR)/dtscon-dtsldap.Tpo -c -o dtscon-dtsldap.o `test -f 'dtsldap.c' || echo '$(srcdir)/'`dtsldap.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/dtscon-dtsldap.Tpo $(DEPDIR)/dtscon-dtsldap.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='dtsldap.c' object='dtscon-dtsldap.o' libtool=no @AMDEPBACKSLASH@
+dtscon-openldap.o: openldap.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(dtscon_CFLAGS) $(CFLAGS) -MT dtscon-openldap.o -MD -MP -MF $(DEPDIR)/dtscon-openldap.Tpo -c -o dtscon-openldap.o `test -f 'openldap.c' || echo '$(srcdir)/'`openldap.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/dtscon-openldap.Tpo $(DEPDIR)/dtscon-openldap.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='openldap.c' object='dtscon-openldap.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(dtscon_CFLAGS) $(CFLAGS) -c -o dtscon-dtsldap.o `test -f 'dtsldap.c' || echo '$(srcdir)/'`dtsldap.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(dtscon_CFLAGS) $(CFLAGS) -c -o dtscon-openldap.o `test -f 'openldap.c' || echo '$(srcdir)/'`openldap.c
 
-dtscon-dtsldap.obj: dtsldap.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(dtscon_CFLAGS) $(CFLAGS) -MT dtscon-dtsldap.obj -MD -MP -MF $(DEPDIR)/dtscon-dtsldap.Tpo -c -o dtscon-dtsldap.obj `if test -f 'dtsldap.c'; then $(CYGPATH_W) 'dtsldap.c'; else $(CYGPATH_W) '$(srcdir)/dtsldap.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/dtscon-dtsldap.Tpo $(DEPDIR)/dtscon-dtsldap.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='dtsldap.c' object='dtscon-dtsldap.obj' libtool=no @AMDEPBACKSLASH@
+dtscon-openldap.obj: openldap.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(dtscon_CFLAGS) $(CFLAGS) -MT dtscon-openldap.obj -MD -MP -MF $(DEPDIR)/dtscon-openldap.Tpo -c -o dtscon-openldap.obj `if test -f 'openldap.c'; then $(CYGPATH_W) 'openldap.c'; else $(CYGPATH_W) '$(srcdir)/openldap.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/dtscon-openldap.Tpo $(DEPDIR)/dtscon-openldap.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='openldap.c' object='dtscon-openldap.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(dtscon_CFLAGS) $(CFLAGS) -c -o dtscon-dtsldap.obj `if test -f 'dtsldap.c'; then $(CYGPATH_W) 'dtsldap.c'; else $(CYGPATH_W) '$(srcdir)/dtsldap.c'; fi`
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(dtscon_CFLAGS) $(CFLAGS) -c -o dtscon-openldap.obj `if test -f 'openldap.c'; then $(CYGPATH_W) 'openldap.c'; else $(CYGPATH_W) '$(srcdir)/openldap.c'; fi`
 
 mostlyclean-libtool:
 	-rm -f *.lo
