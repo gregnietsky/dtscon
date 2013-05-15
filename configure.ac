@@ -31,7 +31,7 @@ AC_ARG_ENABLE([world-peace], AS_HELP_STRING([--enable-world-peace], [Yeah right 
 
 # Checks for libraries.
 AC_CHECK_LIB([m], [pow], [], [AC_MSG_ERROR([Requires Math Lib -lm])])
-PKG_CHECK_MODULES(FWORK, framework >= 0)
+PKG_CHECK_MODULES(DTSAPPLIB, libdtsapp >= 0)
 PKG_CHECK_MODULES(SLANG, slang >= 2.2)
 PKG_CHECK_MODULES(NEWT, libnewt >= 0.52)
 PKG_CHECK_MODULES(CURL, libcurl >= 7)

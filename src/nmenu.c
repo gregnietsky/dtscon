@@ -1,6 +1,5 @@
 #include <newt.h>
 #include <stdlib.h>
-#include <framework.h>
 #include <string.h>
 #include <stdio.h>
 

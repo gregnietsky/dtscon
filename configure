@@ -642,8 +642,8 @@ NEWT_LIBS
 NEWT_CFLAGS
 SLANG_LIBS
 SLANG_CFLAGS
-FWORK_LIBS
-FWORK_CFLAGS
+DTSAPPLIB_LIBS
+DTSAPPLIB_CFLAGS
 PKG_CONFIG_LIBDIR
 PKG_CONFIG_PATH
 PKG_CONFIG
@@ -798,8 +798,8 @@ CXXCPP
 PKG_CONFIG
 PKG_CONFIG_PATH
 PKG_CONFIG_LIBDIR
-FWORK_CFLAGS
-FWORK_LIBS
+DTSAPPLIB_CFLAGS
+DTSAPPLIB_LIBS
 SLANG_CFLAGS
 SLANG_LIBS
 NEWT_CFLAGS
@@ -1464,9 +1464,10 @@ Some influential environment variables:
               directories to add to pkg-config's search path
   PKG_CONFIG_LIBDIR
               path overriding pkg-config's built-in search path
-  FWORK_CFLAGS
-              C compiler flags for FWORK, overriding pkg-config
-  FWORK_LIBS  linker flags for FWORK, overriding pkg-config
+  DTSAPPLIB_CFLAGS
+              C compiler flags for DTSAPPLIB, overriding pkg-config
+  DTSAPPLIB_LIBS
+              linker flags for DTSAPPLIB, overriding pkg-config
   SLANG_CFLAGS
               C compiler flags for SLANG, overriding pkg-config
   SLANG_LIBS  linker flags for SLANG, overriding pkg-config
@@ -16495,19 +16496,19 @@ $as_echo "no" >&6; }
 fi
 
 pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for FWORK" >&5
-$as_echo_n "checking for FWORK... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for DTSAPPLIB" >&5
+$as_echo_n "checking for DTSAPPLIB... " >&6; }
 
-if test -n "$FWORK_CFLAGS"; then
-    pkg_cv_FWORK_CFLAGS="$FWORK_CFLAGS"
+if test -n "$DTSAPPLIB_CFLAGS"; then
+    pkg_cv_DTSAPPLIB_CFLAGS="$DTSAPPLIB_CFLAGS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"framework >= 0\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "framework >= 0") 2>&5
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libdtsapp >= 0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "libdtsapp >= 0") 2>&5
   ac_status=$?
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  pkg_cv_FWORK_CFLAGS=`$PKG_CONFIG --cflags "framework >= 0" 2>/dev/null`
+  pkg_cv_DTSAPPLIB_CFLAGS=`$PKG_CONFIG --cflags "libdtsapp >= 0" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
@@ -16515,16 +16516,16 @@ fi
  else
     pkg_failed=untried
 fi
-if test -n "$FWORK_LIBS"; then
-    pkg_cv_FWORK_LIBS="$FWORK_LIBS"
+if test -n "$DTSAPPLIB_LIBS"; then
+    pkg_cv_DTSAPPLIB_LIBS="$DTSAPPLIB_LIBS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"framework >= 0\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "framework >= 0") 2>&5
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libdtsapp >= 0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "libdtsapp >= 0") 2>&5
   ac_status=$?
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  pkg_cv_FWORK_LIBS=`$PKG_CONFIG --libs "framework >= 0" 2>/dev/null`
+  pkg_cv_DTSAPPLIB_LIBS=`$PKG_CONFIG --libs "libdtsapp >= 0" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
@@ -16545,22 +16546,22 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        FWORK_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "framework >= 0" 2>&1`
+	        DTSAPPLIB_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "libdtsapp >= 0" 2>&1`
         else
-	        FWORK_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "framework >= 0" 2>&1`
+	        DTSAPPLIB_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "libdtsapp >= 0" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
-	echo "$FWORK_PKG_ERRORS" >&5
+	echo "$DTSAPPLIB_PKG_ERRORS" >&5
 
-	as_fn_error $? "Package requirements (framework >= 0) were not met:
+	as_fn_error $? "Package requirements (libdtsapp >= 0) were not met:
 
-$FWORK_PKG_ERRORS
+$DTSAPPLIB_PKG_ERRORS
 
 Consider adjusting the PKG_CONFIG_PATH environment variable if you
 installed software in a non-standard prefix.
 
-Alternatively, you may set the environment variables FWORK_CFLAGS
-and FWORK_LIBS to avoid the need to call pkg-config.
+Alternatively, you may set the environment variables DTSAPPLIB_CFLAGS
+and DTSAPPLIB_LIBS to avoid the need to call pkg-config.
 See the pkg-config man page for more details." "$LINENO" 5
 elif test $pkg_failed = untried; then
      	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
@@ -16571,15 +16572,15 @@ as_fn_error $? "The pkg-config script could not be found or is too old.  Make su
 is in your PATH or set the PKG_CONFIG environment variable to the full
 path to pkg-config.
 
-Alternatively, you may set the environment variables FWORK_CFLAGS
-and FWORK_LIBS to avoid the need to call pkg-config.
+Alternatively, you may set the environment variables DTSAPPLIB_CFLAGS
+and DTSAPPLIB_LIBS to avoid the need to call pkg-config.
 See the pkg-config man page for more details.
 
 To get pkg-config, see <http://pkg-config.freedesktop.org/>.
 See \`config.log' for more details" "$LINENO" 5; }
 else
-	FWORK_CFLAGS=$pkg_cv_FWORK_CFLAGS
-	FWORK_LIBS=$pkg_cv_FWORK_LIBS
+	DTSAPPLIB_CFLAGS=$pkg_cv_DTSAPPLIB_CFLAGS
+	DTSAPPLIB_LIBS=$pkg_cv_DTSAPPLIB_LIBS
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
 

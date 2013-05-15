@@ -1,6 +1,5 @@
 #include <curl/curl.h>
-
-#include <framework.h>
+#include <dtsapp.h>
 
 struct curl {
 	CURL *easy_handle;

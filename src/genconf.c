@@ -32,7 +32,6 @@ LCRVIDEO="true";
 #include <openssl/evp.h>
 
 #include "dtscon.h"
-#include <framework.h>
 
 typedef int     (*config_callback)(void*);
 

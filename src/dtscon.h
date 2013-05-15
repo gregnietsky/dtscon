@@ -1,5 +1,5 @@
 #include <stdint.h>
-#include <framework.h>
+#include <dtsapp.h>
 
 /*Forward Decl*/
 typedef struct menu_item menu_item;

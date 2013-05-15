@@ -3,7 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <framework/framework.h>
+#include <dtsapp.h>
 
 #include "dtscon.h"
 

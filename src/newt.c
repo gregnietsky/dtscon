@@ -4,7 +4,7 @@
 #include <newt.h>
 #include <stdlib.h>
 #include <string.h>
-#include <framework/framework.h>
+#include <dtsapp.h>
 
 #include "dtscon.h"
 
