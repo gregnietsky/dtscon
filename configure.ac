@@ -30,6 +30,11 @@ AC_SUBST(DEVELOPER_CFLAGS)
 AC_ARG_ENABLE([world-peace], AS_HELP_STRING([--enable-world-peace], [Yeah right .....]))
 
 # Checks for libraries.
+AC_CHECK_LIB([m], [pow], [], [AC_MSG_ERROR([Requires Math Lib -lm])])
+AC_CHECK_LIB([lber], [ber_free], [LDAP_LIBS="-llber"], [AC_MSG_ERROR([Requires LDAP/BER/SASL Lib -llber -lldap -lsasl2])])
+AC_CHECK_LIB([sasl2], [sasl_client_init], [LDAP_LIBS="${LDAP_LIBS} -lsasl2"], [AC_MSG_ERROR([Requires LDAP/BER/SASL Lib -llber -lldap -lsasl2])])
+AC_CHECK_LIB([ldap], [ldap_initialize], [LDAP_LIBS="${LDAP_LIBS} -lldap"], [AC_MSG_ERROR([Requires LDAP/BER/SASL Lib -llber -lldap -lsasl2])])
+AC_SUBST(LDAP_LIBS)
 PKG_CHECK_MODULES(FWORK, framework >= 0)
 PKG_CHECK_MODULES(SLANG, slang >= 2.2)
 PKG_CHECK_MODULES(NEWT, libnewt >= 0.52)
@@ -38,7 +43,7 @@ PKG_CHECK_MODULES(XSLT, libxslt >= 1.1)
 PKG_CHECK_MODULES(CURL, libcurl >= 7)
 
 # Checks for header files.
-AC_CHECK_HEADERS([stdint.h stdlib.h string.h sys/ioctl.h termios.h fcntl.h arpa/inet.h])
+AC_CHECK_HEADERS([stdint.h stdlib.h string.h sys/ioctl.h termios.h fcntl.h arpa/inet.h ldap.h sasl/sasl.h sys/time.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_TYPE_UINT8_T
@@ -48,7 +53,7 @@ AC_TYPE_UID_T
 AC_TYPE_UINT32_T
 
 # Checks for library functions. 
-AC_CHECK_FUNCS([mkdir strdup pow])
+AC_CHECK_FUNCS([mkdir strdup pow localtime_r floor])
 AC_FUNC_MALLOC
 AC_FUNC_CHOWN
 

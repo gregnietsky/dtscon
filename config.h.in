@@ -12,8 +12,20 @@
 /* Define to 1 if you have the <fcntl.h> header file. */
 #undef HAVE_FCNTL_H
 
+/* Define to 1 if you have the `floor' function. */
+#undef HAVE_FLOOR
+
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
+
+/* Define to 1 if you have the <ldap.h> header file. */
+#undef HAVE_LDAP_H
+
+/* Define to 1 if you have the `m' library (-lm). */
+#undef HAVE_LIBM
+
+/* Define to 1 if you have the `localtime_r' function. */
+#undef HAVE_LOCALTIME_R
 
 /* Define to 1 if your system has a GNU libc compatible `malloc' function, and
    to 0 otherwise. */
@@ -27,6 +39,9 @@
 
 /* Define to 1 if you have the `pow' function. */
 #undef HAVE_POW
+
+/* Define to 1 if you have the <sasl/sasl.h> header file. */
+#undef HAVE_SASL_SASL_H
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
@@ -48,6 +63,9 @@
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #undef HAVE_SYS_STAT_H
+
+/* Define to 1 if you have the <sys/time.h> header file. */
+#undef HAVE_SYS_TIME_H
 
 /* Define to 1 if you have the <sys/types.h> header file. */
 #undef HAVE_SYS_TYPES_H
