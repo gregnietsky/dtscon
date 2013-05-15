@@ -1,0 +1,804 @@
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <errno.h>
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include <fcntl.h>
+#include <ctype.h>
+#include <grp.h>
+
+#include <openssl/bio.h>
+#include <openssl/evp.h>
+
+#include "dtscon.h"
+#include <framework.h>
+
+typedef int     (*config_callback)(void*);
+
+struct bucket_list *transforms;
+
+const char *xsldir;
+char zcipaddr[16];
+char *ldaplimpw;
+char serial[] = "2013050700";
+
+struct xml_doc *xmldoc;
+struct xml_search *sconf, *dconf;
+
+struct domain_config {
+	struct xslt_doc *zone;
+	struct xslt_doc *key;
+	struct xslt_doc *private;
+} domxsl;
+
+struct config_file {
+	struct xslt_doc *xsltdoc;
+	const char *stylesheet;
+	config_callback *callback;
+};
+
+extern void touch(const char *filename, uid_t user, gid_t group) {
+	int fd;
+
+	fd = creat(filename, 0600);
+	close(fd);
+	chown(filename, user, group);
+}
+
+extern char *b64enc(const char *message) {
+	BIO *bio, *b64;
+	FILE* stream;
+	int encodedSize;
+	char *buffer;
+
+	encodedSize = 4*ceil((double)strlen(message)/3);
+	buffer = objalloc(encodedSize+1, NULL);
+
+	stream = fmemopen(buffer, encodedSize+1, "w");
+	b64 = BIO_new(BIO_f_base64());
+	bio = BIO_new_fp(stream, BIO_NOCLOSE);
+	bio = BIO_push(b64, bio);
+	BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL);
+	BIO_write(bio, message, strlen(message));
+	BIO_flush(bio);
+	BIO_free_all(bio);
+	fclose(stream);
+
+	return buffer;
+}
+
+extern int is_file(const char *path) {
+	struct stat sr;
+	if (!stat(path, &sr)) {
+		return 1;
+	} else {
+		return 0;
+	}
+}
+
+extern int is_dir(const char *path) {
+	struct stat sr;
+	if (!stat(path, &sr) && S_ISDIR(sr.st_mode)) {
+		return 1;
+	} else {
+		return 0;
+	}
+}
+
+extern int is_exec(const char *path) {
+	struct stat sr;
+	if (!stat(path, &sr) && (S_IXUSR & sr.st_mode)) {
+		return 1;
+	} else {
+		return 0;
+	}
+}
+
+extern int mk_dir(const char *dir, mode_t mode, uid_t user, gid_t group) {
+	struct stat sr;
+
+	if ((stat(dir, &sr) && (errno == ENOENT)) && !mkdir(dir, mode) && !chown(dir, user, group)) {
+		return 0;
+	}
+	return -1;
+}
+
+extern const char *getldaplimpw() {
+	FILE *ldaplim;
+	char *fname = NULL;
+	char ldappw[128];
+	struct xml_node *hname;
+
+	if (strlen(ldaplimpw)) {
+		return ldaplimpw;
+	}
+
+	hname = xml_getnode(dconf, "Hostname");
+	
+	if (is_file(fname)) {
+		ldaplim = fopen(fname, "r");
+		fgets(ldappw, 128, ldaplim);
+		fclose(ldaplim);
+	}
+	ldaplimpw = strdup(ldappw);
+	free(fname);
+
+	return ldaplimpw;
+}
+
+extern const char *getzconfip() {
+	struct xml_node *cn, *in;
+	struct xml_search *intiface;
+	char xpath[128], ipfile[128];
+	char *maddr;
+	int cnt;
+
+	if (strlen(zcipaddr)) {
+		return zcipaddr;
+	}
+
+	cn = xml_getnode(sconf, "Internal");
+	snprintf(xpath, sizeof(xpath)-1, "/config/IP/Interfaces/Interface[ . = '%s' ]", cn->value);
+
+	if (!(intiface = xml_xpath(xmldoc, xpath, "name"))) {
+		objunref(cn);
+		return NULL;
+	}
+
+	if (!(in = xml_getfirstnode(intiface, NULL))) {
+		objunref(cn);
+		objunref(intiface);
+		return NULL;
+	}
+
+	maddr = strdup(xml_getattr(in, "macaddr"));
+	for(cnt = 0; cnt < strlen(maddr);cnt++) {
+		maddr[cnt] = tolower(maddr[cnt]);
+	}
+
+	snprintf(ipfile, sizeof(ipfile), "/var/lib/avahi-autoipd/%s", maddr);
+	if (is_file(ipfile)) {
+		FILE *zcip;
+		zcip = fopen(ipfile, "r");
+		fgets(zcipaddr, sizeof(zcipaddr)-1, zcip);
+		fclose(zcip);
+	}
+
+	free(maddr);
+	objunref(cn);
+	objunref(in);
+	objunref(intiface);
+	return zcipaddr;
+}
+
+struct xslt_doc *get_xslt(const char *xslfile) {
+	struct xslt_doc *xslt;
+	char* file;
+	int size;
+
+	size = strlen(xsldir) + strlen(xslfile) + 2;
+	
+	file = malloc(size);
+	snprintf(file, size, "%s/%s", xsldir, xslfile);
+	xslt = xslt_create(xmldoc, file, NULL);
+	free(file);
+	return xslt;
+}
+
+void ifaceconf() {
+	struct xml_search *xsearch;
+	struct xml_node *iface;
+	struct xslt_doc *ifup, *ifbw;
+	void *iter;
+	char *fname;
+
+	if (!(xsearch= xml_xpath(xmldoc, "/config/IP/Interfaces/Interface[not(contains(.,':'))]", NULL))) {
+		return;
+	}
+
+	for(iface = xml_getfirstnode(xsearch, &iter); iface; iface = xml_getnextnode(iter)) {
+		fname = malloc(6 + strlen(iface->value));
+		ifup = get_xslt("ifup.xsl");
+		xslt_addparam(ifup, "iface", iface->value);
+		xslt_addparam(ifup, "zconfip", getzconfip());
+		snprintf(fname, 6 + strlen(iface->value), "ifup.%s\n", iface->value);
+		xslt_apply(xmldoc, ifup, fname, 0);
+		objunref(ifup);
+		free(fname);
+
+		fname = malloc(6 + strlen(iface->value));
+		ifbw = get_xslt("ifbw.xsl");
+		xslt_addparam(ifbw, "iface", iface->value);
+		snprintf(fname, 6 + strlen(iface->value), "ifbw.%s\n", iface->value);
+		xslt_apply(xmldoc, ifbw, fname, 0);
+		objunref(ifbw);
+		free(fname);
+
+		objunref(iface);
+	}
+}
+
+void chilliconf() {
+	struct xml_search *xsearch, *isearch;
+	struct xml_node *root, *dom, *hname, *iiface, *hs;
+	struct xslt_doc *hsphp, *hsiup, *hscnf;
+	const char *serial;
+	char xpath[256];
+	char ipbuf[15];
+	char ipbuf2[15];
+	char uamkey[33];
+	unsigned char digest[16];
+	char md5buf[1024];
+	char *fname, *uam, *fqdn;
+	void *iter;
+	int i;
+
+	dom = xml_getnode(dconf, "Domain");
+	hname = xml_getnode(dconf, "Hostname");
+	root = xml_getrootnode(xmldoc);
+	serial = xml_getattr(root, "serial");
+
+	iiface = xml_getnode(sconf, "Internal");
+	snprintf(xpath, sizeof(xpath)-1, "/config/IP/Interfaces/Interface[ . = '%s' ]", iiface->value);
+	objunref(iiface);
+
+	i = strlen(hname->value) + strlen(dom->value) + 2;
+	fqdn = malloc(i);
+	snprintf(fqdn, i, "%s.%s", hname->value, dom->value);
+
+	xsearch= xml_xpath(xmldoc, xpath, NULL);
+	iiface = xml_getfirstnode(xsearch, NULL);
+	snprintf(md5buf, 1023, "%s%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s%s", fqdn,
+		xml_getattr(iiface, "name"), xml_getattr(iiface, "ipaddr"), xml_getattr(iiface, "subnet"), 
+		iiface->value, xml_getattr(iiface, "dhcpstart"), xml_getattr(iiface, "dhcpend"),
+		xml_getattr(iiface, "bwin"), xml_getattr(iiface, "bwout"), xml_getattr(iiface, "macaddr"), 
+		xml_getattr(iiface, "gateway"),
+		getnetaddr(xml_getattr(iiface, "ipaddr"), atoi(xml_getattr(iiface, "subnet")), ipbuf, 15),
+		getbcaddr(xml_getattr(iiface, "ipaddr"), atoi(xml_getattr(iiface, "subnet")), ipbuf2, 15),
+		serial);
+
+	md5sum(digest, md5buf, strlen(md5buf));
+	for(i = 0; i < 16; ++i) {
+		sprintf(&uamkey[i*2], "%02x", (unsigned int)digest[i]);
+	}
+
+	objunref(iiface);
+	objunref(xsearch);
+	objunref(root);
+	objunref(dom);
+	objunref(hname);
+
+	hsphp = get_xslt("chilli-php.xsl");
+	xslt_addparam(hsphp, "uamsecret", uamkey);
+	xslt_apply(xmldoc, hsphp, "chilli.php", 0);
+	objunref(hsphp);
+
+	if (!(xsearch= xml_xpath(xmldoc, "/config/IP/WiFi[@type = 'Hotspot']", NULL))) {
+		free(fqdn);
+		return;
+	}
+
+	for(hs = xml_getfirstnode(xsearch, &iter); hs; hs = xml_getnextnode(iter)) {
+		fname = malloc(12 + strlen(hs->value));
+		hsiup = get_xslt("chilli-up.xsl");
+		xslt_addparam(hsiup, "hspot", hs->value);
+		snprintf(fname, 11 + strlen(hs->value), "chilli-up.%s\n", hs->value);
+		xslt_apply(xmldoc, hsiup, fname, 0);
+		objunref(hsiup);
+		free(fname);
+
+		fname = malloc(14 + strlen(hs->value));
+		hscnf = get_xslt("chilli-conf.xsl");
+		xslt_addparam(hscnf, "hspot", hs->value);
+		xslt_addparam(hscnf, "uamsecret", uamkey);
+		if (is_file("/var/spool/apache/htdocs/hotspot/user.php")) {
+			char buf[128];
+
+			snprintf(xpath, sizeof(xpath)-1, "/config/IP/Interfaces/Interface[ . = '%s' ]", hs->value);
+			isearch= xml_xpath(xmldoc, xpath, NULL);
+			iiface = xml_getfirstnode(isearch, NULL);
+			snprintf(buf, 127, "http://%s:3990", xml_getattr(iiface, "ipaddr"));
+			uam = url_escape(buf);
+			objunref(iiface);
+			objunref(isearch);
+
+			snprintf(buf, 127, "uamhomepage http://%s/hotspot/user.php?uam_url=%s", fqdn, uam);
+			xslt_addparam(hscnf, "uamhome", buf);
+			free_curl(uam);
+		} else {
+			xslt_addparam(hscnf, "uamhome", "");
+		}
+		snprintf(fname, 13 + strlen(hs->value), "chilli-conf.%s\n", hs->value);
+		xslt_apply(xmldoc, hscnf, fname, 0);
+		objunref(hscnf);
+		free(fname);
+		objunref(hs);
+	}
+	free(fqdn);
+	objunref(iter);
+	objunref(xsearch);
+}
+
+void dnsconfig() {
+	struct xslt_doc *xslt;
+	struct xml_node *dn;
+	char *dynkey = NULL;
+	char *smartkey = NULL;
+	char *file;
+	int size;
+
+	if ((dn = xml_getnode(dconf, "DynKey"))) {;
+		dynkey = b64enc(dn->value);
+		xslt = get_xslt("dnsupdate.xsl");
+		xslt_addparam(xslt, "dynb64key", dynkey);
+		xslt_apply(xmldoc, xslt, "dnsupdate", 0);
+		objunref(xslt);
+		objunref(dn);
+	}
+
+	if ((dn = xml_getnode(dconf, "SmartKey"))) {
+		xslt = get_xslt("named.xsl");
+		smartkey = b64enc(dn->value);
+		xslt_addparam(xslt, "dynb64key", dynkey);
+		xslt_addparam(xslt, "smart64key", smartkey);
+		xslt_apply(xmldoc, xslt, "named.conf", 0);
+		objunref(xslt);
+
+		xslt = get_xslt("dompkey.xsl");
+		xslt_addparam(xslt, "key", smartkey);
+		xslt_apply(xmldoc, xslt, "zones/dyndns.private", 0);
+		objunref(xslt);
+		objunref(dn);
+	}
+
+	if ((dn = xml_getnode(dconf, "Domain"))) {
+		xslt = get_xslt("domzone.xsl");
+		size = strlen(dn->value)+7;
+		file=malloc(size+1);
+		snprintf(file, size, "zones/%s", dn->value);
+		xslt_addparam(xslt, "domain", dn->value);
+		xslt_addparam(xslt, "addrec", "3");
+		xslt_addparam(xslt, "serial", serial);
+		xslt_apply(xmldoc, xslt, file, 0);
+		free(file);
+		objunref(xslt);
+
+		xslt = get_xslt("domzone.xsl");
+		xslt_addparam(xslt, "domain", dn->value);
+		xslt_addparam(xslt, "addrec", "1");
+		xslt_addparam(xslt, "serial", serial);
+		xslt_apply(xmldoc, xslt, "zones/domain.ext", 0);
+		objunref(xslt);
+
+		xslt = get_xslt("domkey.xsl");
+		xslt_addparam(xslt, "domain", dn->value);
+		xslt_addparam(xslt, "key", dynkey);
+		xslt_apply(xmldoc, xslt, "zones/nsupdate.key", 0);
+		objunref(xslt);
+
+		xslt = get_xslt("dompkey.xsl");
+		xslt_addparam(xslt, "key", dynkey);
+		xslt_apply(xmldoc, xslt, "zones/nsupdate.private", 0);
+		objunref(xslt);
+		objunref(dn);
+	}
+
+	if ((dn = xml_getnode(dconf, "DynZone"))) {
+		xslt = get_xslt("domkey.xsl");
+		xslt_addparam(xslt, "domain", dn->value);
+		xslt_addparam(xslt, "key", smartkey);
+		xslt_apply(xmldoc, xslt, "zones/dyndns.key", 0);
+		objunref(xslt);
+		objunref(dn);
+	}
+
+	objunref(dynkey);
+	objunref(smartkey);
+}
+
+void astrisk() {
+	struct xslt_doc *amodxslt, *iaxxslt, *sipxslt;
+
+	amodxslt = get_xslt("astmod.xsl");
+	xslt_addparam(amodxslt, "woomera", (is_file("/etc/asterisk/woomera.conf")) ? "1" : "0");
+	xslt_addparam(amodxslt, "g729", (is_file("/usr/lib/asterisk/modules-10/codec_g729.so")) ? "1" : "0");
+	xslt_addparam(amodxslt, "g723", (is_file("/usr/lib/asterisk/modules-10/codec_g723.so")) ? "1" : "0");
+	xslt_addparam(amodxslt, "misdn", (is_file("/dev/mISDN")) ? "1" : "0");
+	xslt_apply(xmldoc, amodxslt, "astmod.conf", 0);
+	objunref(amodxslt);
+
+	iaxxslt = get_xslt("iax.xsl");
+	xslt_addparam(iaxxslt, "useg729", (is_file("/usr/lib/asterisk/modules-10/codec_g729.so")) ? "1" : "0");
+	xslt_addparam(iaxxslt, "useg723", (is_file("/usr/lib/asterisk/modules-10/codec_g723.so")) ? "1" : "0");
+	xslt_addparam(iaxxslt, "haslocal", (is_file("/etc/asterisk/iax.conf.local")) ? "1" : "0");
+	xslt_apply(xmldoc, iaxxslt, "iax.conf", 0);
+	objunref(iaxxslt);
+
+	sipxslt = get_xslt("sip.xsl");
+	xslt_addparam(sipxslt, "useg729", (is_file("/usr/lib/asterisk/modules-10/codec_g729.so")) ? "1" : "0");
+	xslt_addparam(sipxslt, "useg723", (is_file("/usr/lib/asterisk/modules-10/codec_g723.so")) ? "1" : "0");
+	xslt_addparam(sipxslt, "usetls", (is_dir("/etc/openssl/voipca")) ? "1" : "0");
+	xslt_apply(xmldoc, sipxslt, "sip.conf", 0);
+	objunref(sipxslt);
+}
+
+void exports() {
+	struct xslt_doc *exxslt;
+	exxslt = get_xslt("exports.xsl");
+
+
+	xslt_addparam(exxslt, "ubuntud", (is_file("/tftpboot/Ubuntu/desktop-i386.iso")) ? "/tftpboot/Ubuntu/Desktop" : "");
+	xslt_addparam(exxslt, "ubuntus", (is_file("/tftpboot/Ubuntu/server-i386.iso")) ? "/tftpboot/Ubuntu/Server" : "");
+	xslt_addparam(exxslt, "install", (is_dir("/mnt/dev")) ? "/mnt/dev" : "");
+	xslt_addparam(exxslt, "tinycore", (is_dir("/tftpboot/TinyCore")) ? "/tftpboot/TinyCore" : "");
+	xslt_apply(xmldoc, exxslt, "exports", 0);
+
+	objunref(exxslt);
+}
+
+void samba() {
+	struct xslt_doc *smbxslt;
+
+	smbxslt = get_xslt("smbconf.xsl");
+	xslt_addparam(smbxslt, "avahi", (strlen(getzconfip())) ? "1" : "0");
+	xslt_addparam(smbxslt, "dhcp", (is_file("/var/run/dhclient.pid")) ? "1" : "0");
+	xslt_addparam(smbxslt, "torrent", (is_dir("/root/torrent")) ? "1" : "0");
+	xslt_addparam(smbxslt, "cdrom", (is_dir("/dev/cdrom")) ? "1" : "0");
+	xslt_addparam(smbxslt, "backup", (is_dir("/var/spool/backup")) ? "1" : "0");
+	xslt_addparam(smbxslt, "linadmin", (getgrnam("linux admin users")) ? "1" : "0");
+
+	xslt_apply(xmldoc, smbxslt, "smb.conf", 0);
+	objunref(smbxslt);
+}
+
+void iptables() {
+	char *smartkey = NULL;
+	struct xslt_doc *ipdown, *iptables, *iptables2;
+	struct xml_node *dn;
+
+	if ((dn = xml_getnode(dconf, "SmartKey"))) {
+		smartkey = b64enc(dn->value);
+		objunref(dn);
+	}
+
+	ipdown = get_xslt("ipdown.xsl");
+	xslt_addparam(ipdown, "smartkey", (smartkey) ? smartkey : "");
+	xslt_apply(xmldoc, ipdown, "ipdown", 0);
+	objunref(ipdown);
+
+	iptables = get_xslt("iptables.xsl");
+	xslt_addparam(iptables, "zcipaddr", getzconfip());
+	xslt_apply(xmldoc, iptables, "iptables", 0);
+	objunref(iptables);
+
+	iptables2 = get_xslt("iptables2.xsl");
+	xslt_addparam(iptables2, "smartkey", (smartkey) ? smartkey : "");
+	xslt_apply(xmldoc, iptables2, "iptables2", 0);
+	objunref(iptables);
+
+	objunref(smartkey);
+}
+
+void squid() {
+	struct xslt_doc *sgxslt, *scxslt;
+
+	sgxslt = get_xslt("sglists.xsl");
+
+	xslt_addparam(sgxslt, "filter", "Allow");
+	xslt_addparam(sgxslt, "type", "Domain");
+	xslt_apply(xmldoc, sgxslt, "local_allow_domains", 0);
+	xslt_clearparam(sgxslt);
+
+	xslt_addparam(sgxslt, "filter", "Deny");
+	xslt_addparam(sgxslt, "type", "Domain");
+	xslt_apply(xmldoc, sgxslt, "local_deny_domains", 0);
+	xslt_clearparam(sgxslt);
+
+	xslt_addparam(sgxslt, "filter", "Allow");
+	xslt_addparam(sgxslt, "type", "URL");
+	xslt_apply(xmldoc, sgxslt, "local_allow_urls", 0);
+	xslt_clearparam(sgxslt);
+
+	xslt_addparam(sgxslt, "filter", "Deny");
+	xslt_addparam(sgxslt, "type", "URL");
+	xslt_apply(xmldoc, sgxslt, "local_deny_urls", 0);
+	xslt_clearparam(sgxslt);
+
+	xslt_addparam(sgxslt, "filter", "Allow");
+	xslt_addparam(sgxslt, "type", "Keyword");
+	xslt_apply(xmldoc, sgxslt, "local_allow_exp", 0);
+	xslt_clearparam(sgxslt);
+
+	xslt_addparam(sgxslt, "filter", "Deny");
+	xslt_addparam(sgxslt, "type", "Keyword");
+	xslt_apply(xmldoc, sgxslt, "local_deny_exp", 0);
+	xslt_clearparam(sgxslt);
+	objunref(sgxslt);
+
+	scxslt = get_xslt("squid.xsl");
+	xslt_addparam(scxslt, "unlinkd",(is_exec("/usr/libexec/squid/unlinkd")) ? "/usr/libexec/squid/unlinkd" : "/usr/libexec/unlinkd");
+	xslt_apply(xmldoc, scxslt, "squid.conf", 0);
+	objunref(scxslt);
+	
+}
+
+void mail() {
+	struct xslt_doc *msxslt, *smxslt, *soxslt;
+
+	msxslt = get_xslt("mailscanner.xsl");
+	xslt_addparam(msxslt, "msgsign",
+		(is_file("/opt/MailScanner/etc/reports/en/inline.sig.txt") &&
+		 is_file("/opt/MailScanner/etc/reports/en/inline.sig.html")) ? "yes" : "no");
+	xslt_apply(xmldoc, msxslt, "mailscanner.conf", 0);
+	objunref(msxslt);
+
+	smxslt = get_xslt("sendmail.xsl");
+	if (is_file("/etc/ipsec.d/cacerts/server_cacert.pem")) {
+		xslt_addparam(smxslt, "cacert", "/etc/ipsec.d/cacerts/server_cacert.pem");
+		xslt_addparam(smxslt, "crlcert", "/etc/ipsec.d/crls/server_crl.pem");
+	} else {
+		xslt_addparam(smxslt, "cacert", "/etc/ipsec.d/cacerts/cacert.pem");
+		xslt_addparam(smxslt, "crlcert", "/etc/ipsec.d/crls/crl.pem");
+	}
+	xslt_apply(xmldoc, smxslt, "sendmail.mc", 0);
+	objunref(smxslt);
+
+	soxslt = get_xslt("sogo.xsl");
+	xslt_addparam(soxslt, "ldaplimpw", "/etc/ipsec.d/cacerts/server_cacert.pem");
+	xslt_apply(xmldoc, soxslt, "sogo.conf", 0);
+	objunref(soxslt);
+}
+
+void dhcpclientfw() {
+	struct xslt_doc *dhcpfwxslt;
+
+	dhcpfwxslt = get_xslt("dhclient-fw.xsl");
+
+	xslt_addparam(dhcpfwxslt, "zcipaddr", getzconfip());
+	xslt_apply(xmldoc, dhcpfwxslt, "dhclient-fw", 0);
+
+	objunref(dhcpfwxslt);
+}
+
+
+void autofs() {
+	struct xslt_doc *afsxslt;
+	afsxslt = get_xslt("autofs.xsl");
+
+	xslt_addparam(afsxslt, "cd", (is_file("/dev/cdrom")) ? "1" : "0");
+	xslt_apply(xmldoc, afsxslt, "autofs.conf", 0);
+
+	objunref(afsxslt);
+}
+
+void tftptmpl_config() {
+	char *spaconf[] = {"spa2102","spa3102","spa901","spa921","spa922","spa941","spa942","spa962","spa8000"};
+	struct xslt_doc *spaxslt, *ylxslt;
+	char conffile[32];
+	int cnt;
+
+	spaxslt = get_xslt("lsysspa.xsl");
+	for(cnt=0;cnt < sizeof(spaconf)/sizeof(spaconf[0]);cnt++) {
+		xslt_addparam(spaxslt, "model", spaconf[cnt]);
+		snprintf(conffile, sizeof(conffile), "tftptmpl/%s.cfg", spaconf[cnt]);
+		xslt_apply(xmldoc, spaxslt, conffile, 0);
+		xslt_clearparam(spaxslt);
+	}
+	objunref(spaxslt);
+
+	ylxslt = get_xslt("yealink.xsl");
+	for(cnt=0;cnt <= 9;cnt++) {
+		snprintf(conffile, sizeof(conffile), "tftptmpl/y00000000000%i.cfg", cnt);
+		xslt_apply(xmldoc, ylxslt, conffile, 0);
+	}
+	objunref(ylxslt);
+}
+
+void domain_config(const char *domain, const char *key, int addrec) {
+	const char *b64key;
+	char *conffile;
+	int cfsize;
+	char addrecp[2];
+
+	cfsize = strlen(domain) + 15;
+	conffile = malloc(cfsize);
+
+	xslt_addparam(domxsl.zone, "domain", domain);
+
+	snprintf(addrecp, sizeof(addrecp), "%i", addrec);
+	xslt_addparam(domxsl.zone, "addrec", addrecp);
+	
+	xslt_addparam(domxsl.zone, "serial", serial);
+
+	snprintf(conffile, cfsize, "zones/%s", domain);
+	xslt_apply(xmldoc, domxsl.zone, conffile, 0);
+	xslt_clearparam(domxsl.zone);
+
+	if (key) {
+		b64key = b64enc(key);
+		xslt_addparam(domxsl.key, "domain", domain);
+		xslt_addparam(domxsl.key, "key", b64key);
+		snprintf(conffile, cfsize, "zones/%s.key", domain);
+		xslt_apply(xmldoc, domxsl.key, conffile, 0);
+		xslt_clearparam(domxsl.key);
+
+		xslt_addparam(domxsl.private, "domain", domain);
+		xslt_addparam(domxsl.private, "key", b64key);
+		snprintf(conffile, cfsize, "zones/%s.private", domain);
+		xslt_apply(xmldoc, domxsl.private, conffile, 0);
+		xslt_clearparam(domxsl.private);
+		objunref((void*)b64key);
+	}
+
+	free(conffile);
+}
+
+void create_zone_configs() {
+	struct xml_search *xsearch;
+	struct xml_node *xn;
+	void *iter;
+	const char *domain, *key, *internal;
+
+	if (!(xsearch= xml_xpath(xmldoc, "/config/DNS/Hosted/Domain", "domain"))) {
+		return;
+	}
+
+	for(xn = xml_getfirstnode(xsearch, &iter); xn; xn = xml_getnextnode(iter)) {
+		domain = xml_getattr(xn, "domain");
+		key = xml_getattr(xn, "key");
+		internal = xml_getattr(xn, "internal");
+		if (strlen(key) && !strcmp(internal, "true")) {
+			domain_config(domain, key, 1);
+		}
+		objunref(xn);
+	}
+	objunref(xsearch);
+	objunref(iter);
+}
+
+void create_rev_configs() {
+	struct xml_search *xsearch;
+	struct xml_node *xn;
+	void *iter;
+
+	if (!(xsearch= xml_xpath(xmldoc, "/config/DNS/InAddr/Reverse", NULL))) {
+		return;
+	}
+
+	for(xn = xml_getfirstnode(xsearch, &iter); xn; xn = xml_getnextnode(iter)) {
+		domain_config(xn->value, NULL, 0);
+		objunref(xn);
+	}
+	objunref(xsearch);
+	objunref(iter);
+}
+
+void run_xslt(const char *xslfile, const char *conffile) {
+	struct xslt_doc *xslt;
+
+	xslt = get_xslt(xslfile);
+	xslt_apply(xmldoc, xslt, conffile, 0);
+	objunref(xslt);
+}
+
+void create_static_configs() {
+	run_xslt("iftab.xsl", "iftab");
+	run_xslt("crontab.xsl","crontab");
+	run_xslt("voicemail.xsl","voicemail.conf");
+	run_xslt("providers.xsl","providers.conf");
+	run_xslt("intinfo.xsl","intinfo.inc");
+	run_xslt("rctos.xsl","rc.tos");
+	run_xslt("ntp.xsl","ntp.conf");
+	run_xslt("clamav.xsl","clamav.conf");
+	run_xslt("clamstart.xsl","clamd.start");
+	run_xslt("gretun.xsl","tunnels");
+	run_xslt("hosts.xsl","hosts");
+	run_xslt("fetchmailrc.xsl","fetchmailrc");
+	run_xslt("logonbat.xsl","logon.bat");
+	run_xslt("dhclient.xsl","dhclient.conf");
+	run_xslt("mailfilter.xsl","filename.rules.conf");
+	run_xslt("radclients.xsl","clients.conf");
+	run_xslt("radiusclient.xsl","radiusclient.conf");
+	run_xslt("radcserver.xsl","radcserver");
+	run_xslt("radproxy.xsl","proxy.conf");
+	run_xslt("faxtty.xsl","faxtty");
+	run_xslt("faxconfig.xsl","faxconfig");
+	run_xslt("hosts.xsl","hosts");
+	run_xslt("fetchmailrc.xsl","fetchmailrc");
+	run_xslt("secret.xsl","secret");
+	run_xslt("diald.xsl","diald.scr");
+	run_xslt("odbc.xsl","odbc.ini");
+	run_xslt("ooh323.xsl","ooh323.conf");
+	run_xslt("ldaprep.xsl","ldap.replica");
+	run_xslt("slapd.xsl","slapd.conf");
+	run_xslt("procmail.xsl","procmailrc.pub");
+	run_xslt("rcmail.xsl","rc.mail");
+	run_xslt("pppup3g.xsl","pppup.ppp3g");
+	run_xslt("rcppp.xsl","rc.ppp");
+	run_xslt("resolv.xsl","resolv.conf");
+	run_xslt("hostname.xsl","HOSTNAME");
+	run_xslt("idnszone.xsl","idnszones");
+	run_xslt("ednszone.xsl","ednszones");
+	run_xslt("caconf.xsl","ca.conf");
+	run_xslt("voipca.xsl","voipca.conf");
+	run_xslt("servssl.xsl","server.conf");
+	run_xslt("servsslv.xsl","voipssl.conf");
+	run_xslt("rcinterface.xsl","rc.interface");
+	run_xslt("ip6tables.xsl","ip6tables");
+	run_xslt("filtercnf.xsl","filter.cnf");
+	run_xslt("filtercnf.xsl","filter.conf");
+	run_xslt("freshclam.xsl","freshclam.conf");
+	run_xslt("frox.xsl","frox.conf");
+	run_xslt("krb5.xsl","krb5.conf");
+	run_xslt("dnsfwd.xsl","forwarders.static");
+	run_xslt("dhcpd6.xsl","dhcpd6.conf");
+	run_xslt("dhcpd.xsl","dhcpd.conf");
+	run_xslt("submit.xsl","submit.mc");
+	run_xslt("inittab.xsl","inittab");
+	run_xslt("mgetty.xsl","mgetty.conf");
+	run_xslt("rcmount.xsl","rc.mount");
+	run_xslt("rchfax.xsl","rc.hfax");
+	run_xslt("t38modem.xsl","t38modem_start");
+	run_xslt("nettalkvol.xsl","AppleVolumes.default");
+	run_xslt("avahi-daemon.xsl","avahi-daemon.conf");
+	run_xslt("diald-3g.xsl","diald.3g");
+	run_xslt("exclude-nfs.xsl","exclude.nfs");
+	run_xslt("options.xml","options");
+	run_xslt("portidmap.xsl","port-id-map");
+}
+
+void genconf(struct xml_doc *xdoc, const char *confdir, const char *xdir) {
+	xmldoc = xdoc;
+	xsldir = xdir;
+
+	init_curleasy();
+	mk_dir(confdir, 0750, 80, 80);
+	if (!chdir(confdir)) {
+		mk_dir("zones", 0750, 80, 80);
+		mk_dir("tftptmpl", 0750, 80, 80);
+	}
+	create_static_configs();
+
+	sconf = xml_xpath(xmldoc, "/config/IP/SysConf/Option", "option");
+	dconf = xml_xpath(xmldoc, "/config/DNS/Config/Option", "option");
+
+	domxsl.zone = get_xslt("domzone.xsl");
+	domxsl.key = get_xslt("domkey.xsl");
+	domxsl.private = get_xslt("dompkey.xsl");
+
+	create_zone_configs();
+	create_rev_configs();
+	domain_config("0.0.127.in-addr.arpa", NULL, 2);
+
+	objunref(domxsl.zone);
+	objunref(domxsl.key);
+	objunref(domxsl.private);
+
+	tftptmpl_config();
+	astrisk();
+	autofs();
+	dhcpclientfw();
+	dnsconfig();
+	exports();
+	iptables();
+	squid();
+	mail();
+	samba();
+	chilliconf();
+	ifaceconf();
+
+	objunref(sconf);
+	objunref(dconf);
+
+/* ipup / ipbw bits
+   dns serial
+   ldaplimpw*/
+	close_curleasy();
+	if (ldaplimpw) {
+		free(ldaplimpw);
+	}
+	exit(0);
+}
