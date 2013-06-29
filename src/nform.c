@@ -1,7 +1,6 @@
 #include <string.h>
 #include <newt.h>
 #include <stdlib.h>
-#include <framework/framework.h>
 #include "dtscon.h"
 
 struct form_box {
