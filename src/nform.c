@@ -30,7 +30,7 @@ struct form_result {
 		char check;
 	} value;
 	struct xml_node *node;
-	enum restype  type;
+	enum restype type;
 };
 
 int results_hash(const void *data, int key) {
@@ -112,7 +112,7 @@ extern void addFormEntry(struct form_box *fbox, const char *label, const char *n
 	result->type = NEWT_FORM_ENTRYBOX;
 
 	newtFormAddComponent(fbox->form, newtLabel(1, fbox->row, label));
-	newtFormAddComponent(fbox->form, 
+	newtFormAddComponent(fbox->form,
 		newtEntry((fbox->width/2)+1, fbox->row, value, (fbox->width/2)-2, (const char **)&result->value.entry,
 					NEWT_ENTRY_SCROLL));
 	objunref(result);
@@ -133,8 +133,8 @@ extern void addFormCheck(struct form_box *fbox, const char *label, const char *n
 	}
 	result->type = NEWT_FORM_CHECKBOX;
 	newtFormAddComponent(fbox->form, newtLabel(1, fbox->row, label));
-	newtFormAddComponent(fbox->form, 
-		newtCheckbox((fbox->width/2)+1, fbox->row, NULL, defval, "* ", (char *)&result->value.check)); 
+	newtFormAddComponent(fbox->form,
+		newtCheckbox((fbox->width/2)+1, fbox->row, NULL, defval, "* ", (char *)&result->value.check));
 	objunref(result);
 	fbox->row++;
 }
@@ -193,14 +193,14 @@ void save_changes(struct form_box *fbox, const char *xroot, const char *newnoden
 	if (akey) {
 		root = bucket_list_find_key(results, akey);
 		tnode = bucket_list_find_key(results, NULL);
-		if (tnode && root &&  !tnode->node && strlen(tnode->value.entry) && strlen(root->value.entry)) {
+		if (tnode && root && !tnode->node && strlen(tnode->value.entry) && strlen(root->value.entry)) {
 			tnode->node = xml_addnode(fbox->xmldoc, xroot, newnodename, tnode->value.entry, akey, root->value.entry);
 		} else if (tnode && tnode->node && strlen(tnode->value.entry)) {
 			xml_modify(fbox->xmldoc, tnode->node, tnode->value.entry);
 		}
 	} else {
 		tnode = bucket_list_find_key(results, NULL);
-		if (tnode &&  !tnode->node && strlen(tnode->value.entry)) {
+		if (tnode && !tnode->node && strlen(tnode->value.entry)) {
 			tnode->node = xml_addnode(fbox->xmldoc, xroot, newnodename, tnode->value.entry, NULL, NULL);
 		} else if (tnode && tnode->node && strlen(tnode->value.entry)) {
 			xml_modify(fbox->xmldoc, tnode->node, tnode->value.entry);
