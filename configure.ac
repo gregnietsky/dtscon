@@ -19,7 +19,6 @@ AC_PROG_CPP
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
-AC_PROG_RANLIB
 
 AC_ARG_ENABLE([dev-mode], AS_HELP_STRING([--enable-dev-mode], [Developer mode -g -Wall -Werror -pedantic-errors]))
 if test "x$enable_dev_mode" = "xyes" ; then
@@ -31,25 +30,25 @@ AC_ARG_ENABLE([world-peace], AS_HELP_STRING([--enable-world-peace], [Yeah right 
 
 # Checks for libraries.
 AC_CHECK_LIB([m], [pow], [], [AC_MSG_ERROR([Requires Math Lib -lm])])
-PKG_CHECK_MODULES(DTSAPPLIB, libdtsapp >= 0)
+PKG_CHECK_MODULES(DTSAPPLIB, libdtsapp >= 0.2)
 PKG_CHECK_MODULES(SLANG, slang >= 2.2)
 PKG_CHECK_MODULES(NEWT, libnewt >= 0.52)
 PKG_CHECK_MODULES(CURL, libcurl >= 7)
 
 # Checks for header files.
-AC_CHECK_HEADERS([stdint.h stdlib.h string.h sys/ioctl.h termios.h fcntl.h arpa/inet.h ldap.h sasl/sasl.h sys/time.h])
+AC_CHECK_HEADERS([arpa/inet.h fcntl.h stdint.h stdlib.h string.h sys/ioctl.h termios.h unistd.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
-AC_TYPE_UINT8_T
+AC_TYPE_UID_T
 AC_TYPE_MODE_T
 AC_TYPE_SIZE_T
-AC_TYPE_UID_T
 AC_TYPE_UINT32_T
+AC_TYPE_UINT8_T
 
-# Checks for library functions. 
-AC_CHECK_FUNCS([mkdir strdup pow localtime_r floor])
-AC_FUNC_MALLOC
+# Checks for library functions.
 AC_FUNC_CHOWN
+AC_FUNC_MALLOC
+AC_CHECK_FUNCS([floor localtime_r mkdir pow strdup])
 
 AC_CONFIG_FILES([Makefile
                  src/Makefile])
