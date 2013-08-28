@@ -504,7 +504,6 @@ void chilliconf() {
 
 			snprintf(buf, 127, "uamhomepage http://%s/hotspot/user.php?uam_url=%s", fqdn, uam);
 			xslt_addparam(hscnf, "uamhome", buf);
-			free_curl(uam);
 		} else {
 			xslt_addparam(hscnf, "uamhome", "");
 		}
@@ -1446,8 +1445,6 @@ void init_genconf(struct xml_doc *xdoc, const char *confdir, const char *xdir) {
 	xmldoc = xdoc;
 	xsldir = xdir;
 
-	init_curleasy();
-
 	mk_dir(confdir, 0750, 80, 80);
 	if (!chdir(confdir)) {
 		mk_dir("zones", 0750, 80, 80);
@@ -1466,7 +1463,6 @@ void close_genconf() {
         objunref(mconf);
         objunref(emconf);
  
-        close_curleasy();
         if (ldaplimpw) {
                 free(ldaplimpw);
 		ldaplimpw = NULL;

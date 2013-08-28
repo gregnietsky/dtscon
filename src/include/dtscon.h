@@ -52,26 +52,3 @@ extern void xpath_to_menu(struct menu_list *menulist, struct xml_doc *xmldata, c
 void genconf(struct xml_doc *xmldoc, const char *confdir, const char *xsldir, const char *config);
 extern void touch(const char *filename, uid_t user, gid_t group);
 
-/*ip4 util*/
-extern const char *cidrtosn(int bitlen, const char *buf, int size);
-extern const char *getnetaddr(const char *ipaddr, int cidr, const char *buf, int size);
-extern const char *getbcaddr(const char *ipaddr, int cidr, const char *buf, int size);
-extern const char *getfirstaddr(const char *ipaddr, int cidr, const char *buf, int size);
-extern const char *getlastaddr(const char *ipaddr, int cidr, const char *buf, int size);
-extern uint32_t cidrcnt(int bitlen);
-extern int reservedip(const char *ipaddr);
-extern char* ipv6to4prefix(const char *ipaddr);
-extern int check_ipv4(const char* ip, int cidr, const char *test);
-
-/*CURL*/
-extern void init_curleasy();
-extern void close_curleasy();
-extern char *url_escape(char *url);
-extern char *url_unescape(char *url);
-extern void free_curl(void *curlvar);
-
-/* UTIL*/
-extern int is_file(const char *path);
-extern int is_dir(const char *path);
-extern int is_exec(const char *path);
-extern int mk_dir(const char *dir, mode_t mode, uid_t user, gid_t group);

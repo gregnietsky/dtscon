@@ -33,7 +33,6 @@ AC_CHECK_LIB([m], [pow], [], [AC_MSG_ERROR([Requires Math Lib -lm])])
 PKG_CHECK_MODULES(DTSAPPLIB, libdtsapp >= 0.2)
 PKG_CHECK_MODULES(SLANG, slang >= 2.2)
 PKG_CHECK_MODULES(NEWT, libnewt >= 0.52)
-PKG_CHECK_MODULES(CURL, libcurl >= 7)
 
 # Checks for header files.
 AC_CHECK_HEADERS([arpa/inet.h fcntl.h stdint.h stdlib.h string.h sys/ioctl.h termios.h unistd.h])
