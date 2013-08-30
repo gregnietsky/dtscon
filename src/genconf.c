@@ -227,7 +227,7 @@ void ipv6conf() {
 		natip =  xml_getnode(sconf, "NattedIP");
 		strncpy(sitip, xml_getattr(extip, "ipaddr"), 16);
 
-		if (natip && !reservedip(natip->value)) {
+		if (natip && natip->value && !reservedip(natip->value)) {
 			strncpy(validip, "1", 2);
 			if ((ip624ip = ipv6to4prefix(sitip))) {
 				strncpy(gwout, ip624ip, 32);
@@ -236,7 +236,7 @@ void ipv6conf() {
 			ip624ip = ipv6to4prefix(natip->value);
 			strncpy(ip6prefix, ip624ip, 128);
 			snprintf(baseprefix, 32, "2002:%s", ip624ip);
-		} else if (!natip && !reservedip(sitip)) {
+		} else if ((!natip || !natip->value) && !reservedip(sitip)) {
 			strncpy(validip, "1", 2);
 			strncpy(gwout, "${i6prefix}", 32);
 			ip624ip = ipv6to4prefix(sitip);
